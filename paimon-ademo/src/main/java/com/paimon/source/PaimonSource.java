@@ -14,7 +14,21 @@ import java.nio.file.Paths;
 
 public class PaimonSource {
     public static void main(String[] args) throws Exception {
-        FileUtils.deleteDir("D:/lakehouse/paimon1");
+        // 动态获取项目根目录
+        String projectRoot = System.getProperty("user.dir");
+
+        // 构造 Paimon 仓库路径
+        String paimonWarehouse = projectRoot + "/lakehouse/paimon1";
+        Path warehousePath = Paths.get(paimonWarehouse);
+
+        // 确保目录存在
+        if (!Files.exists(warehousePath)) {
+            Files.createDirectories(warehousePath);
+        }
+
+        // 构造检查点路径
+        String checkpointPath = projectRoot + "/lakehouse/chk";
+
         Configuration conf = new Configuration();
         //设置WebUI绑定的本地端口
         conf.setString(RestOptions.BIND_PORT,"8082");
@@ -25,11 +39,14 @@ public class PaimonSource {
         /** 设置检查点的时间间隔 */
         env.enableCheckpointing(120000);
         RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(
-                "file:///D:/lakehouse/chk", true);
+                "file://" + checkpointPath, true);
         rocksDBStateBackend.setPredefinedOptions(PredefinedOptions.SPINNING_DISK_OPTIMIZED_HIGH_MEM);
         env.setStateBackend(rocksDBStateBackend);
         // 创建 TableEnvironment
         final StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
+
+        tableEnv.getConfig().getConfiguration().setString("plugin.path", "/Volumes/karekinSSD1/project/paimon/paimon-plugins");
+
 
         String cdcDLL = "CREATE TABLE IF NOT EXISTS input (\n" +
                 "  `id` bigint,\n" +
@@ -38,19 +55,21 @@ public class PaimonSource {
                 "   PRIMARY KEY ( `id` ) NOT ENFORCED\n" +
                 ") WITH (\n" +
                 "'connector' = 'mysql-cdc',\n" +
-                "'hostname' = 'mj_mysql',\n" +
-                "'port' = '13306',\n" +
+                "'hostname' = '192.168.1.11',\n" +
+                "'port' = '3306',\n" +
                 "'username' = 'root',\n" +
-                "'password' = 'mj20240313_',\n" +
+                "'password' = '666666',\n" +
                 "'database-name' = 'test',\n" +
                 "'scan.startup.mode' = 'initial',\n" +
                 "'table-name' = 'p_source4'\n" +
                 ") ";
         tableEnv.executeSql(cdcDLL);
-        String catalog = "CREATE CATALOG paimon WITH (\n" +
-                "    'type' = 'paimon',\n" +
-                "    'warehouse' = 'file:/D:/lakehouse/paimon1'" +
-                "    )";
+
+        String catalog = String.format(
+                "CREATE CATALOG paimon WITH (\n" +
+                        "    'type' = 'paimon',\n" +
+                        "    'warehouse' = 'file:%s'\n" +
+                        ")", paimonWarehouse.replace("\\", "/"));
 
         tableEnv.executeSql(catalog);
         tableEnv.executeSql("create database if not exists paimon.test ");

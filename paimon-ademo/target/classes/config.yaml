@@ -1,4 +1,0 @@
-
-#心跳参数
-heartbeat.timeout: 3000000
-heartbeat.interval: 3000000
