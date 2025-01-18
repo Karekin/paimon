@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="separateProdTestSources" value="false" />
+    <profile name="Maven 1" modules="paimon-codegen,paimon-spark-3.1" />
+    <profile name="Maven 2" modules="paimon-spark,paimon-spark-3.2,paimon-spark-3.3,paimon-spark-3.4,paimon-spark-3.5,paimon-spark-common,paimon-spark3-common">
+      <parameters>
+        <parameter value="-nobootcp" />
+        <parameter value="-target:jvm-1.8" />
+      </parameters>
+    </profile>
+  </component>
+</project>

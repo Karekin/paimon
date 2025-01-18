@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="paimon-bundle" />
+        <module name="paimon-flink-common" />
+        <module name="paimon-hive-connector-2.1-cdh-6.3" />
+        <module name="paimon-spark-3.1" />
+        <module name="paimon-e2e-tests" />
+        <module name="paimon-spark-3.3" />
+        <module name="paimon-spark-3.2" />
+        <module name="paimon-codegen" />
+        <module name="paimon-s3-impl" />
+        <module name="paimon-format" />
+        <module name="paimon-hive-common" />
+        <module name="paimon-flink-1.20" />
+        <module name="paimon-micro-benchmarks" />
+        <module name="paimon-flink-cdc" />
+        <module name="paimon-spark-3.5" />
+        <module name="paimon-s3" />
+        <module name="paimon-spark-3.4" />
+        <module name="paimon-spark-common" />
+        <module name="paimon-flink-action" />
+        <module name="paimon-core" />
+        <module name="paimon-test-utils" />
+        <module name="paimon-ci-tools" />
+        <module name="paimon-hive-catalog" />
+        <module name="paimon-codegen-loader" />
+        <module name="paimon-flink-1.18" />
+        <module name="paimon-flink-1.19" />
+        <module name="paimon-flink-1.16" />
+        <module name="paimon-flink-1.17" />
+        <module name="paimon-hadoop-shaded" />
+        <module name="paimon-service-client" />
+        <module name="paimon-ademo" />
+        <module name="paimon-flink-1.15" />
+        <module name="paimon-service-runtime" />
+        <module name="paimon-aquery-parquet" />
+        <module name="paimon-hive-connector-2.1" />
+        <module name="paimon-hive-connector-2.2" />
+        <module name="paimon-hive-connector-3.1" />
+        <module name="paimon-hive-connector-2.3" />
+        <module name="paimon-docs" />
+        <module name="paimon-oss" />
+        <module name="paimon-cluster-benchmark" />
+        <module name="paimon-oss-impl" />
+        <module name="paimon-arrow" />
+        <module name="paimon-common" />
+        <module name="paimon-hive-connector-common" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="flink-alineage" target="1.8" />
+      <module name="paimon-gs" target="1.8" />
+      <module name="paimon-gs-impl" target="1.8" />
+      <module name="parquet-query" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="flink-alineage" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-ademo" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-aquery-parquet" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-arrow" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-benchmark" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-bundle" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-ci-tools" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-cluster-benchmark" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-codegen" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-codegen-loader" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-core" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-docs" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-e2e-tests" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-filesystems" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.15" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.16" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.17" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.18" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.19" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-1.20" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-action" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-cdc" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-flink-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-format" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-gs" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-gs-impl" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hadoop-shaded" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-catalog" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-2.1" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-2.1-cdh-6.3" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-2.2" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-2.3" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-3.1" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-hive-connector-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-micro-benchmarks" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-oss" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-oss-impl" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-parent" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-s3" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-s3-impl" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-service" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-service-client" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-service-runtime" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-3.1" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-3.2" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-3.3" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-3.4" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-3.5" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-test-utils" options="-Xpkginfo:always -Xlint:deprecation" />
+    </option>
+  </component>
+</project>
