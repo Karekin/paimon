@@ -30,7 +30,7 @@ public class FlinkSQLDategen {
                 + ")";
 
         tableEnv.executeSql(ddl);
-        tableEnv.executeSql("select  Id,count(id) cnt_id from xm.t_user group by id ").print();
+        tableEnv.executeSql("select id,count(id) cnt_id from xm.t_user group by id ").print();
         env.execute("Flink SQL Demo");
 
     }
