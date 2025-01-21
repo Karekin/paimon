@@ -37,7 +37,7 @@ public class PaimonSource {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(conf);
         env.setParallelism(1);
         /** 设置检查点的时间间隔 */
-        env.enableCheckpointing(120000);
+        env.enableCheckpointing(60000);
         RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(
                 "file://" + checkpointPath, true);
         rocksDBStateBackend.setPredefinedOptions(PredefinedOptions.SPINNING_DISK_OPTIMIZED_HIGH_MEM);

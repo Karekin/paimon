@@ -7,6 +7,12 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 public class PaimonQuery {
     public static void main(String[] args) throws Exception {
+        // 动态获取项目根目录
+        String projectRoot = System.getProperty("user.dir");
+
+        // 构造 Paimon 仓库路径
+        String paimonWarehouse = projectRoot + "/lakehouse/paimon1";
+
         Configuration conf = new Configuration();
         //设置WebUI绑定的本地端口
         conf.setString(RestOptions.BIND_PORT,"8081");
@@ -18,10 +24,12 @@ public class PaimonQuery {
         //env.enableCheckpointing(3000);
         // 创建 TableEnvironment
         final StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env);
-        String catalog = "CREATE CATALOG paimon WITH (\n" +
-                "    'type' = 'paimon',\n" +
-                "    'warehouse' = 'file:/D:/lakehouse/paimon'" +
-                "    )";
+
+        String catalog = String.format(
+                "CREATE CATALOG paimon WITH (\n" +
+                        "    'type' = 'paimon',\n" +
+                        "    'warehouse' = 'file:%s'\n" +
+                        ")", paimonWarehouse.replace("\\", "/"));
 
         tableEnv.executeSql(catalog);
         tableEnv.executeSql("create database if not exists paimon.test ");
