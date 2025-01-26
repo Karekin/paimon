@@ -21,34 +21,74 @@ package org.apache.paimon.data.columnar.writable;
 import org.apache.paimon.data.columnar.ColumnVector;
 import org.apache.paimon.data.columnar.Dictionary;
 
-/** Writable {@link ColumnVector}. */
+/**
+ * 可写的 {@link ColumnVector} 接口。
+ *
+ * <p>该接口扩展了 {@link ColumnVector}，支持对列向量的写入操作，包括设置值、设置空值以及使用字典等操作。
+ */
 public interface WritableColumnVector extends ColumnVector {
 
-    /** Resets the column to default state. */
+    /**
+     * 重置列向量到默认状态。
+     *
+     * <p>该方法通常用于清空当前列向量的内容，以便复用列向量对象。
+     */
     void reset();
 
-    /** Set null at rowId. */
+    /**
+     * 在指定行设置为 null。
+     *
+     * @param rowId 要设置为 null 的行的索引。
+     */
     void setNullAt(int rowId);
 
-    /** Set nulls from rowId to rowId + count (exclude). */
+    /**
+     * 将从指定行开始的一段连续行设置为 null。
+     *
+     * @param rowId 起始行索引（包含）。
+     * @param count 要设置为 null 的行数。
+     */
     void setNulls(int rowId, int count);
 
-    /** Fill the column vector with nulls. */
+    /**
+     * 将整个列向量填充为 null。
+     *
+     * <p>该方法通常用于初始化或清空整个列向量。
+     */
     void fillWithNulls();
 
-    /** Set the dictionary, it should work with dictionary ids. */
+    /**
+     * 设置字典，该字典应该与字典 ID 一起使用。
+     *
+     * @param dictionary 要设置的字典对象。
+     */
     void setDictionary(Dictionary dictionary);
 
-    /** Check if there's a dictionary. */
+    /**
+     * 检查是否已设置字典。
+     *
+     * @return 如果有字典返回 true，否则返回 false。
+     */
     boolean hasDictionary();
 
     /**
-     * Reserve a integer column for ids of dictionary. The size of return {@link WritableIntVector}
-     * should be equal to or bigger than capacity. DictionaryIds must inconsistent with {@link
-     * #setDictionary}. We don't support a mix of dictionary.
+     * 为字典的 ID 保留一个整数列。
+     *
+     * <p>返回的 {@link WritableIntVector} 的大小应等于或大于指定的容量。
+     * 字典 ID 必须与 {@link #setDictionary} 一致。当前不支持混合字典的操作。
+     *
+     * @param capacity 要保留的最小容量。
+     * @return 可写的整数向量，用于存储字典 ID。
      */
     WritableIntVector reserveDictionaryIds(int capacity);
 
-    /** Get reserved dictionary ids. */
+    /**
+     * 获取已保留的字典 ID 列。
+     *
+     * <p>该方法返回与字典相关联的整数向量。
+     *
+     * @return 可写的整数向量，包含字典 ID。
+     */
     WritableIntVector getDictionaryIds();
 }
+

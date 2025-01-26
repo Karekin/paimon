@@ -24,30 +24,48 @@ import org.apache.paimon.data.columnar.Dictionary;
 import java.io.Serializable;
 
 /**
- * Contains the shared structure for {@link ColumnVector}s, including NULL information and
- * dictionary. NOTE: if there are some nulls, must set {@link #noNulls} to false.
+ * 为 {@link ColumnVector} 提供共享结构的抽象基类，包括 NULL 信息和字典功能。
+ *
+ * <p>注意：如果列向量中存在 null 值，必须将 {@link #noNulls} 设置为 false。
  */
 public abstract class AbstractWritableVector implements WritableColumnVector, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // If the whole column vector has no nulls, this is true, otherwise false.
+    /**
+     * 指示整个列向量是否没有 null 值。
+     * - 如果整个列向量没有 null 值，则为 true。
+     * - 如果存在任何 null 值，则为 false。
+     */
     protected boolean noNulls = true;
 
     /**
-     * The Dictionary for this column. If it's not null, will be used to decode the value in get().
+     * 该列向量的字典。
+     *
+     * <p>如果字典不为 null，则在 {@code get()} 方法中会使用字典解码值。
      */
     protected Dictionary dictionary;
 
-    /** Update the dictionary. */
+    /**
+     * 更新列向量的字典。
+     *
+     * <p>字典用于编码和解码列向量中的值，以节省存储空间并提高操作效率。
+     *
+     * @param dictionary 要设置的新字典对象。
+     */
     @Override
     public void setDictionary(Dictionary dictionary) {
         this.dictionary = dictionary;
     }
 
-    /** Returns true if this column has a dictionary. */
+    /**
+     * 检查列向量是否有字典。
+     *
+     * @return 如果字典不为 null，则返回 true；否则返回 false。
+     */
     @Override
     public boolean hasDictionary() {
         return this.dictionary != null;
     }
 }
+

@@ -43,6 +43,7 @@
         <module name="paimon-hive-connector-2.1" />
         <module name="paimon-hive-connector-2.2" />
         <module name="paimon-hive-connector-3.1" />
+        <module name="paimon-spark3-common" />
         <module name="paimon-hive-connector-2.3" />
         <module name="paimon-docs" />
         <module name="paimon-oss" />
@@ -116,6 +117,7 @@
       <module name="paimon-spark-3.4" options="-Xpkginfo:always -Xlint:deprecation" />
       <module name="paimon-spark-3.5" options="-Xpkginfo:always -Xlint:deprecation" />
       <module name="paimon-spark-common" options="-Xpkginfo:always -Xlint:deprecation" />
+      <module name="paimon-spark3-common" options="-Xpkginfo:always -Xlint:deprecation" />
       <module name="paimon-test-utils" options="-Xpkginfo:always -Xlint:deprecation" />
     </option>
   </component>
