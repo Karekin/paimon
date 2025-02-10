@@ -26,18 +26,37 @@ import org.apache.flink.table.data.RowData;
 
 import java.util.function.Function;
 
-/** Paimon {@link DataStreamSinkProvider}. */
+/**
+ * Paimon 的 {@link DataStreamSinkProvider} 实现类。
+ * 该类用于创建 DataStreamSink，作为 Flink 任务的最终数据接收器（Sink）。
+ */
 public class PaimonDataStreamSinkProvider implements DataStreamSinkProvider {
 
+    /** 数据流转换函数，负责将 DataStream<RowData> 转换为 DataStreamSink<?> */
     private final Function<DataStream<RowData>, DataStreamSink<?>> producer;
 
+    /**
+     * 构造方法，初始化 PaimonDataStreamSinkProvider。
+     *
+     * @param producer 一个函数式接口，接收 DataStream<RowData> 并返回 DataStreamSink<?>，
+     *                 用于定义 Sink 逻辑
+     */
     public PaimonDataStreamSinkProvider(Function<DataStream<RowData>, DataStreamSink<?>> producer) {
         this.producer = producer;
     }
 
+    /**
+     * 消费数据流，并生成最终的 Sink。
+     * 该方法会调用 producer.apply(dataStream)，将 DataStream<RowData> 转换为 DataStreamSink<?>。
+     *
+     * @param providerContext 提供者上下文（ProviderContext），可用于获取相关配置信息
+     * @param dataStream 需要写入的 Flink 数据流
+     * @return 转换后的 DataStreamSink，用于最终的数据存储
+     */
     @Override
     public DataStreamSink<?> consumeDataStream(
             ProviderContext providerContext, DataStream<RowData> dataStream) {
         return producer.apply(dataStream);
     }
 }
+

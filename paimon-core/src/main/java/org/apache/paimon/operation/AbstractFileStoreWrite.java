@@ -56,34 +56,70 @@ import java.util.concurrent.Executors;
 import static org.apache.paimon.io.DataFileMeta.getMaxSequenceNumber;
 
 /**
- * Base {@link FileStoreWrite} implementation.
+ * 文件存储写入操作的抽象基类，提供基本的写入逻辑实现。
  *
- * @param <T> type of record to write.
+ * @param <T> 需要写入的记录类型
  */
 public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractFileStoreWrite.class);
 
+    /** 当前提交的用户 */
     private final String commitUser;
+
+    /** 快照管理器，管理存储系统的快照 */
     protected final SnapshotManager snapshotManager;
+
+    /** 文件存储扫描器，用于扫描现有的文件元数据 */
     private final FileStoreScan scan;
+
+    /** 允许的最大写入器数量 */
     private final int writerNumberMax;
+
+    /** 可选的索引维护器工厂，用于管理索引 */
     @Nullable private final IndexMaintainer.Factory<T> indexFactory;
+
+    /** 可选的删除向量维护器工厂，用于管理删除向量 */
     @Nullable private final DeletionVectorsMaintainer.Factory dvMaintainerFactory;
 
+    /** 可选的 IO 管理器，用于管理 I/O 操作 */
     @Nullable protected IOManager ioManager;
 
+    /** 记录当前活跃的写入器，按照分区和桶（bucket）进行组织 */
     protected final Map<BinaryRow, Map<Integer, WriterContainer<T>>> writers;
 
+    /** 懒加载的压缩执行器 */
     private ExecutorService lazyCompactExecutor;
+
+    /** 标记在退出时是否关闭压缩执行器 */
     private boolean closeCompactExecutorWhenLeaving = true;
+
+    /** 是否忽略之前存储的文件 */
     private boolean ignorePreviousFiles = false;
+
+    /** 是否处于流式写入模式 */
     protected boolean isStreamingMode = false;
 
+    /** 用于记录压缩操作的度量指标 */
     protected CompactionMetrics compactionMetrics = null;
+
+    /** 关联的表名称 */
     protected final String tableName;
+
+    /** 是否仅支持插入（即不支持更新和删除） */
     private boolean isInsertOnly;
 
+    /**
+     * 构造函数，初始化 AbstractFileStoreWrite。
+     *
+     * @param commitUser 当前提交用户
+     * @param snapshotManager 快照管理器
+     * @param scan 文件存储扫描器
+     * @param indexFactory 可选的索引维护器工厂
+     * @param dvMaintainerFactory 可选的删除向量维护器工厂
+     * @param tableName 关联的表名称
+     * @param writerNumberMax 允许的最大写入器数量
+     */
     protected AbstractFileStoreWrite(
             String commitUser,
             SnapshotManager snapshotManager,
@@ -102,6 +138,12 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
         this.writerNumberMax = writerNumberMax;
     }
 
+    /**
+     * 配置 I/O 管理器
+     *
+     * @param ioManager 需要配置的 I/O 管理器
+     * @return 当前 FileStoreWrite 实例
+     */
     @Override
     public FileStoreWrite<T> withIOManager(IOManager ioManager) {
         this.ioManager = ioManager;
@@ -110,22 +152,26 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
 
     @Override
     public FileStoreWrite<T> withMemoryPoolFactory(MemoryPoolFactory memoryPoolFactory) {
+        // 设置内存池工厂，当前方法未实现具体逻辑，子类可覆盖此方法
         return this;
     }
 
     @Override
     public void withIgnorePreviousFiles(boolean ignorePreviousFiles) {
+        // 设置是否忽略之前存储的文件，适用于全量写入或者清空表重新写入的情况
         this.ignorePreviousFiles = ignorePreviousFiles;
     }
 
     @Override
     public void withCompactExecutor(ExecutorService compactExecutor) {
+        // 设置压缩任务执行器，防止数据碎片过多影响查询性能
         this.lazyCompactExecutor = compactExecutor;
         this.closeCompactExecutorWhenLeaving = false;
     }
 
     @Override
     public void withInsertOnly(boolean insertOnly) {
+        // 设置是否为仅插入模式（即不支持更新和删除）
         this.isInsertOnly = insertOnly;
         for (Map<Integer, WriterContainer<T>> containerMap : writers.values()) {
             for (WriterContainer<T> container : containerMap.values()) {
@@ -135,35 +181,52 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
     }
 
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 根据分区和bucket将数据写入存储。
-    */
+     * 根据分区和 bucket 将数据写入存储。
+     *
+     * @param partition 分区
+     * @param bucket 桶编号
+     * @param data 需要写入的数据
+     * @throws Exception 发生异常时抛出
+     */
     @Override
     public void write(BinaryRow partition, int bucket, T data) throws Exception {
-        // 根据分区和桶获取WriterContainer(MergeTree)，写操作所需的所有组件
+        // 根据分区和桶获取 WriterContainer，获取写入组件
         WriterContainer<T> container = getWriterWrapper(partition, bucket);
-        // 使用Writer组件写入数据
+        // 执行写入
         container.writer.write(data);
-        // 如果存在索引维护器，则通知其有新记录写入
+        // 如果存在索引维护器，通知其有新数据写入
         if (container.indexMaintainer != null) {
             container.indexMaintainer.notifyNewRecord(data);
         }
     }
 
+    /**
+     * 对存储数据进行压缩操作，以减少存储空间占用并优化查询性能。
+     *
+     * @param partition 分区
+     * @param bucket 桶编号
+     * @param fullCompaction 是否执行完全压缩
+     * @throws Exception 发生异常时抛出
+     */
     @Override
     public void compact(BinaryRow partition, int bucket, boolean fullCompaction) throws Exception {
         getWriterWrapper(partition, bucket).writer.compact(fullCompaction);
     }
 
+    /**
+     * 记录新创建的文件，通常用于数据写入过程中产生的新数据文件。
+     *
+     * @param snapshotId 产生新文件的快照 ID
+     * @param partition 产生新文件的分区
+     * @param bucket 产生新文件的桶
+     * @param files 新创建的文件列表
+     */
     @Override
-    public void notifyNewFiles(
-            long snapshotId, BinaryRow partition, int bucket, List<DataFileMeta> files) {
+    public void notifyNewFiles(long snapshotId, BinaryRow partition, int bucket, List<DataFileMeta> files) {
         WriterContainer<T> writerContainer = getWriterWrapper(partition, bucket);
         if (LOG.isDebugEnabled()) {
             LOG.debug(
-                    "Get extra compact files for partition {}, bucket {}. Extra snapshot {}, base snapshot {}.\nFiles: {}",
+                    "获取额外的压缩文件，分区: {}, bucket: {}，额外快照: {}, 基础快照: {}。\n文件: {}",
                     partition,
                     bucket,
                     snapshotId,
@@ -175,24 +238,26 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
         }
     }
 
+    /**
+     * 准备提交数据，确保所有的写入操作都被正确记录。
+     *
+     * @param waitCompaction 是否等待当前压缩任务完成
+     * @param commitIdentifier 本次提交的唯一标识符
+     * @return 提交的 CommitMessage 列表
+     * @throws Exception 发生异常时抛出
+     */
     @Override
-    public List<CommitMessage> prepareCommit(boolean waitCompaction, long commitIdentifier)
-            throws Exception {
+    public List<CommitMessage> prepareCommit(boolean waitCompaction, long commitIdentifier) throws Exception {
         long latestCommittedIdentifier;
+
+        // 获取最新提交的标识符，如果是首次提交，跳过快照扫描，减少不必要的开销
         if (writers.values().stream()
-                        .map(Map::values)
-                        .flatMap(Collection::stream)
-                        .mapToLong(w -> w.lastModifiedCommitIdentifier)
-                        .max()
-                        .orElse(Long.MIN_VALUE)
+                .map(Map::values)
+                .flatMap(Collection::stream)
+                .mapToLong(w -> w.lastModifiedCommitIdentifier)
+                .max()
+                .orElse(Long.MIN_VALUE)
                 == Long.MIN_VALUE) {
-            // Optimization for the first commit.
-            //
-            // If this is the first commit, no writer has previous modified commit, so the value of
-            // `latestCommittedIdentifier` does not matter.
-            //
-            // Without this optimization, we may need to scan through all snapshots only to find
-            // that there is no previous snapshot by this user, which is very inefficient.
             latestCommittedIdentifier = Long.MIN_VALUE;
         } else {
             latestCommittedIdentifier =
@@ -204,18 +269,19 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
 
         List<CommitMessage> result = new ArrayList<>();
 
-        Iterator<Map.Entry<BinaryRow, Map<Integer, WriterContainer<T>>>> partIter =
-                writers.entrySet().iterator();
+        // 遍历所有分区和桶，处理提交逻辑
+        Iterator<Map.Entry<BinaryRow, Map<Integer, WriterContainer<T>>>> partIter = writers.entrySet().iterator();
         while (partIter.hasNext()) {
             Map.Entry<BinaryRow, Map<Integer, WriterContainer<T>>> partEntry = partIter.next();
             BinaryRow partition = partEntry.getKey();
-            Iterator<Map.Entry<Integer, WriterContainer<T>>> bucketIter =
-                    partEntry.getValue().entrySet().iterator();
+            Iterator<Map.Entry<Integer, WriterContainer<T>>> bucketIter = partEntry.getValue().entrySet().iterator();
+
             while (bucketIter.hasNext()) {
                 Map.Entry<Integer, WriterContainer<T>> entry = bucketIter.next();
                 int bucket = entry.getKey();
                 WriterContainer<T> writerContainer = entry.getValue();
 
+                // 获取提交增量信息
                 CommitIncrement increment = writerContainer.writer.prepareCommit(waitCompaction);
                 List<IndexFileMeta> newIndexFiles = new ArrayList<>();
                 if (writerContainer.indexMaintainer != null) {
@@ -225,34 +291,27 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
                 if (compactDeletionFile != null) {
                     compactDeletionFile.getOrCompute().ifPresent(newIndexFiles::add);
                 }
-                CommitMessageImpl committable =
-                        new CommitMessageImpl(
-                                partition,
-                                bucket,
-                                increment.newFilesIncrement(),
-                                increment.compactIncrement(),
-                                new IndexIncrement(newIndexFiles));
+
+                // 构造提交消息
+                CommitMessageImpl committable = new CommitMessageImpl(
+                        partition,
+                        bucket,
+                        increment.newFilesIncrement(),
+                        increment.compactIncrement(),
+                        new IndexIncrement(newIndexFiles)
+                );
                 result.add(committable);
 
+                // 如果提交为空，并且写入器的最新修改已被提交，关闭该写入器并释放资源
                 if (committable.isEmpty()) {
-                    // Condition 1: There is no more record waiting to be committed. Note that the
-                    // condition is < (instead of <=), because each commit identifier may have
-                    // multiple snapshots. We must make sure all snapshots of this identifier are
-                    // committed.
-                    // Condition 2: No compaction is in progress. That is, no more changelog will be
-                    // produced.
                     if (writerContainer.lastModifiedCommitIdentifier < latestCommittedIdentifier
                             && !writerContainer.writer.isCompacting()) {
-                        // Clear writer if no update, and if its latest modification has committed.
-                        //
-                        // We need a mechanism to clear writers, otherwise there will be more and
-                        // more such as yesterday's partition that no longer needs to be written.
                         if (LOG.isDebugEnabled()) {
                             LOG.debug(
-                                    "Closing writer for partition {}, bucket {}. "
-                                            + "Writer's last modified identifier is {}, "
-                                            + "while latest committed identifier is {}, "
-                                            + "current commit identifier is {}.",
+                                    "关闭写入器，分区: {}, bucket: {}，"
+                                            + "写入器最后修改的提交标识符: {}, "
+                                            + "最新已提交标识符: {}, "
+                                            + "当前提交标识符: {}。",
                                     partition,
                                     bucket,
                                     writerContainer.lastModifiedCommitIdentifier,
@@ -267,6 +326,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
                 }
             }
 
+            // 如果当前分区没有可用的桶，移除该分区
             if (partEntry.getValue().isEmpty()) {
                 partIter.remove();
             }
@@ -274,6 +334,7 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
 
         return result;
     }
+
 
     @Override
     public void close() throws Exception {
@@ -450,27 +511,47 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
 
     @Override
     public void withExecutionMode(boolean isStreamingMode) {
+        // 设置是否处于流模式
         this.isStreamingMode = isStreamingMode;
     }
 
     @Override
     public FileStoreWrite<T> withMetricRegistry(MetricRegistry metricRegistry) {
+        // 绑定度量指标
         this.compactionMetrics = new CompactionMetrics(metricRegistry, tableName);
         return this;
     }
 
+    /**
+     * 扫描已有的数据文件元数据（DataFileMeta）。
+     *
+     * @param snapshotId  快照 ID，表示要从哪个快照中进行扫描
+     * @param partition   需要扫描的分区
+     * @param bucket      需要扫描的桶（bucket）
+     * @return 返回该分区和桶中的数据文件元数据列表
+     */
     private List<DataFileMeta> scanExistingFileMetas(
             long snapshotId, BinaryRow partition, int bucket) {
         List<DataFileMeta> existingFileMetas = new ArrayList<>();
-        // Concat all the DataFileMeta of existing files into existingFileMetas.
-        scan.withSnapshot(snapshotId).withPartitionBucket(partition, bucket).plan().files().stream()
-                .map(ManifestEntry::file)
+        // 扫描指定快照、分区和 bucket 下的文件，并收集所有的 DataFileMeta
+        scan.withSnapshot(snapshotId)
+                .withPartitionBucket(partition, bucket)
+                .plan()
+                .files()
+                .stream()
+                .map(ManifestEntry::file) // 获取文件元数据
                 .forEach(existingFileMetas::add);
         return existingFileMetas;
     }
 
+    /**
+     * 获取或创建用于压缩（compaction）的线程池。
+     *
+     * @return  返回用于执行压缩任务的线程池
+     */
     private ExecutorService compactExecutor() {
         if (lazyCompactExecutor == null) {
+            // 创建单线程调度执行器，用于执行压缩任务
             lazyCompactExecutor =
                     Executors.newSingleThreadScheduledExecutor(
                             new ExecutorThreadFactory(
@@ -479,13 +560,36 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
         return lazyCompactExecutor;
     }
 
+    /**
+     * 获取当前的 compaction 线程池（用于测试）。
+     *
+     * @return  返回 compaction 线程池
+     */
     @VisibleForTesting
     public ExecutorService getCompactExecutor() {
         return lazyCompactExecutor;
     }
 
+    /**
+     * 通知新创建的写入器（子类可重写该方法）。
+     *
+     * @param writer  需要通知的新写入器
+     */
     protected void notifyNewWriter(RecordWriter<T> writer) {}
 
+    /**
+     * 创建新的 RecordWriter。
+     *
+     * @param snapshotId              该写入器创建时所基于的快照 ID
+     * @param partition               数据分区
+     * @param bucket                  目标存储桶
+     * @param restoreFiles            需要恢复的文件列表
+     * @param restoredMaxSeqNumber    需要恢复的最大序列号
+     * @param restoreIncrement        需要恢复的增量信息
+     * @param compactExecutor         压缩任务执行线程池
+     * @param deletionVectorsMaintainer  删除向量维护器
+     * @return  返回创建的 RecordWriter
+     */
     protected abstract RecordWriter<T> createWriter(
             @Nullable Long snapshotId,
             BinaryRow partition,
@@ -496,21 +600,33 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
             ExecutorService compactExecutor,
             @Nullable DeletionVectorsMaintainer deletionVectorsMaintainer);
 
-    // force buffer spill to avoid out of memory in batch mode
+    /**
+     * 强制触发缓冲区溢出，以避免批处理模式下的内存溢出（子类可重写）。
+     *
+     * @throws Exception 如果溢出过程中发生异常
+     */
     protected void forceBufferSpill() throws Exception {}
 
     /**
-     * {@link RecordWriter} with the snapshot id it is created upon and the identifier of its last
-     * modified commit.
+     * {@link WriterContainer} 用于存储 RecordWriter 及其相关信息。
+     * 该类用于管理写入器的快照 ID 和最近修改的提交标识符（commit identifier）。
      */
     @VisibleForTesting
     public static class WriterContainer<T> {
-        public final RecordWriter<T> writer;
-        @Nullable public final IndexMaintainer<T> indexMaintainer;
-        @Nullable public final DeletionVectorsMaintainer deletionVectorsMaintainer;
-        protected final long baseSnapshotId;
-        protected long lastModifiedCommitIdentifier;
+        public final RecordWriter<T> writer; // 记录写入器
+        @Nullable public final IndexMaintainer<T> indexMaintainer; // 索引维护器（可为空）
+        @Nullable public final DeletionVectorsMaintainer deletionVectorsMaintainer; // 删除向量维护器
+        protected final long baseSnapshotId; // 该写入器基于的快照 ID
+        protected long lastModifiedCommitIdentifier; // 最近修改的提交标识符
 
+        /**
+         * WriterContainer 构造函数。
+         *
+         * @param writer                 记录写入器
+         * @param indexMaintainer        索引维护器（可为空）
+         * @param deletionVectorsMaintainer 删除向量维护器（可为空）
+         * @param baseSnapshotId         该写入器创建时所基于的快照 ID
+         */
         protected WriterContainer(
                 RecordWriter<T> writer,
                 @Nullable IndexMaintainer<T> indexMaintainer,
@@ -519,14 +635,21 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
             this.writer = writer;
             this.indexMaintainer = indexMaintainer;
             this.deletionVectorsMaintainer = deletionVectorsMaintainer;
+            // 如果 baseSnapshotId 为空，则设置为第一个快照 ID 之前
             this.baseSnapshotId =
                     baseSnapshotId == null ? Snapshot.FIRST_SNAPSHOT_ID - 1 : baseSnapshotId;
-            this.lastModifiedCommitIdentifier = Long.MIN_VALUE;
+            this.lastModifiedCommitIdentifier = Long.MIN_VALUE; // 设定默认的提交标识符
         }
     }
 
+    /**
+     * 获取当前存储的所有写入器（用于测试）。
+     *
+     * @return  返回当前写入器的映射表
+     */
     @VisibleForTesting
     Map<BinaryRow, Map<Integer, WriterContainer<T>>> writers() {
         return writers;
     }
+
 }

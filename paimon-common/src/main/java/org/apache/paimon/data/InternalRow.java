@@ -31,19 +31,19 @@ import java.io.Serializable;
 import static org.apache.paimon.types.DataTypeChecks.getPrecision;
 import static org.apache.paimon.types.DataTypeChecks.getScale;
 
-/* This file is based on source code of Apache Flink Project (https://flink.apache.org/), licensed by the Apache
- * Software Foundation (ASF) under the Apache License, Version 2.0. See the NOTICE file distributed with this work for
- * additional information regarding copyright ownership. */
+/* 该文件基于 Apache Flink 项目 (https://flink.apache.org/) 的源代码，
+ * 由 Apache 软件基金会 (ASF) 在 Apache 许可证 2.0 版本下授权使用。
+ * 详情请参阅随本工作分发的 NOTICE 文件，以获取有关版权归属的其他信息。
+ */
 
 /**
- * Base interface for an internal data structure representing data of {@link RowType}.
+ * 内部数据结构的基本接口，表示 {@link RowType} 类型的数据。
  *
- * <p>The mappings from SQL data types to the internal data structures are listed in the following
- * table:
+ * <p>SQL 数据类型到内部数据结构的映射如下：
  *
  * <pre>
  * +--------------------------------+-----------------------------------------+
- * | SQL Data Types                 | Internal Data Structures                |
+ * | SQL 数据类型                   | 内部数据结构                             |
  * +--------------------------------+-----------------------------------------+
  * | BOOLEAN                        | boolean                                 |
  * +--------------------------------+-----------------------------------------+
@@ -65,9 +65,9 @@ import static org.apache.paimon.types.DataTypeChecks.getScale;
  * +--------------------------------+-----------------------------------------+
  * | DOUBLE                         | double                                  |
  * +--------------------------------+-----------------------------------------+
- * | DATE                           | int (number of days since epoch)        |
+ * | DATE                           | int（自 Epoch 起的天数）                 |
  * +--------------------------------+-----------------------------------------+
- * | TIME                           | int (number of milliseconds of the day) |
+ * | TIME                           | int（一天中的毫秒数）                     |
  * +--------------------------------+-----------------------------------------+
  * | TIMESTAMP                      | {@link Timestamp}                       |
  * +--------------------------------+-----------------------------------------+
@@ -81,7 +81,7 @@ import static org.apache.paimon.types.DataTypeChecks.getScale;
  * +--------------------------------+-----------------------------------------+
  * </pre>
  *
- * <p>Nullability is always handled by the container data structure.
+ * <p>可空性（nullability）始终由容器数据结构处理。
  *
  * @see GenericRow
  * @see JoinedRow
@@ -91,157 +91,177 @@ import static org.apache.paimon.types.DataTypeChecks.getScale;
 public interface InternalRow extends DataGetters {
 
     /**
-     * Returns the number of fields in this row.
+     * 返回此行中的字段数。
      *
-     * <p>The number does not include {@link RowKind}. It is kept separately.
+     * <p>此数量不包括 {@link RowKind}，后者单独存储。
+     *
+     * @return 字段数量
      */
     int getFieldCount();
 
     /**
-     * Returns the kind of change that this row describes in a changelog.
+     * 返回此行在变更日志（changelog）中的变更类型。
      *
      * @see RowKind
+     * @return 变更类型
      */
     RowKind getRowKind();
 
     /**
-     * Sets the kind of change that this row describes in a changelog.
+     * 设置此行在变更日志中的变更类型。
      *
      * @see RowKind
+     * @param kind 变更类型
      */
     void setRowKind(RowKind kind);
 
-    // ------------------------------------------------------------------------------------------
-    // Access Utilities
-    // ------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------
+// 访问工具方法（Access Utilities）
+// ------------------------------------------------------------------------------------------
 
-    /** Returns the data class for the given {@link DataType}. */
+    /**
+     * 根据给定的 {@link DataType} 返回对应的 Java 数据类型类。
+     *
+     * @param type  数据类型
+     * @return      该数据类型对应的 Java 类
+     */
     static Class<?> getDataClass(DataType type) {
-        // ordered by type root definition
+        // 按照数据类型的根类型（TypeRoot）进行分类处理
         switch (type.getTypeRoot()) {
             case CHAR:
             case VARCHAR:
-                return BinaryString.class;
+                return BinaryString.class; // 字符串类型映射为 BinaryString
             case BOOLEAN:
-                return Boolean.class;
+                return Boolean.class; // 布尔类型映射为 Boolean
             case BINARY:
             case VARBINARY:
-                return byte[].class;
+                return byte[].class; // 二进制数据类型映射为字节数组
             case DECIMAL:
-                return Decimal.class;
+                return Decimal.class; // 小数类型映射为 Decimal
             case TINYINT:
-                return Byte.class;
+                return Byte.class; // 8 位整数类型映射为 Byte
             case SMALLINT:
-                return Short.class;
+                return Short.class; // 16 位整数类型映射为 Short
             case INTEGER:
             case DATE:
             case TIME_WITHOUT_TIME_ZONE:
-                return Integer.class;
+                return Integer.class; // 32 位整数类型映射为 Integer（包括日期和时间）
             case BIGINT:
-                return Long.class;
+                return Long.class; // 64 位整数类型映射为 Long
             case FLOAT:
-                return Float.class;
+                return Float.class; // 32 位浮点数类型映射为 Float
             case DOUBLE:
-                return Double.class;
+                return Double.class; // 64 位浮点数类型映射为 Double
             case TIMESTAMP_WITHOUT_TIME_ZONE:
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                return Timestamp.class;
+                return Timestamp.class; // 时间戳类型映射为 Timestamp
             case ARRAY:
-                return InternalArray.class;
+                return InternalArray.class; // 数组类型映射为 InternalArray
             case MULTISET:
             case MAP:
-                return InternalMap.class;
+                return InternalMap.class; // 映射类型映射为 InternalMap
             case ROW:
-                return InternalRow.class;
+                return InternalRow.class; // 结构化行类型映射为 InternalRow
             default:
-                throw new IllegalArgumentException("Illegal type: " + type);
+                throw new IllegalArgumentException("非法数据类型：" + type);
         }
     }
 
     /**
-     * Creates an accessor for getting elements in an internal row data structure at the given
-     * position.
+     * 创建一个访问器，用于在运行时获取 {@link InternalRow} 数据结构中指定位置的元素。
      *
-     * @param fieldType the element type of the row
-     * @param fieldPos the element position of the row
+     * @param fieldType 字段的数据类型
+     * @param fieldPos  字段在行中的索引位置
+     * @return          该字段的访问器
      */
     static FieldGetter createFieldGetter(DataType fieldType, int fieldPos) {
         final FieldGetter fieldGetter;
-        // ordered by type root definition
+        // 按照数据类型的根类型（TypeRoot）进行分类处理
         switch (fieldType.getTypeRoot()) {
             case CHAR:
             case VARCHAR:
-                fieldGetter = row -> row.getString(fieldPos);
+                fieldGetter = row -> row.getString(fieldPos); // 访问字符串字段
                 break;
             case BOOLEAN:
-                fieldGetter = row -> row.getBoolean(fieldPos);
+                fieldGetter = row -> row.getBoolean(fieldPos); // 访问布尔字段
                 break;
             case BINARY:
             case VARBINARY:
-                fieldGetter = row -> row.getBinary(fieldPos);
+                fieldGetter = row -> row.getBinary(fieldPos); // 访问二进制字段
                 break;
             case DECIMAL:
                 final int decimalPrecision = getPrecision(fieldType);
                 final int decimalScale = getScale(fieldType);
-                fieldGetter = row -> row.getDecimal(fieldPos, decimalPrecision, decimalScale);
+                fieldGetter = row -> row.getDecimal(fieldPos, decimalPrecision, decimalScale); // 访问 Decimal 字段
                 break;
             case TINYINT:
-                fieldGetter = row -> row.getByte(fieldPos);
+                fieldGetter = row -> row.getByte(fieldPos); // 访问 8 位整数字段
                 break;
             case SMALLINT:
-                fieldGetter = row -> row.getShort(fieldPos);
+                fieldGetter = row -> row.getShort(fieldPos); // 访问 16 位整数字段
                 break;
             case INTEGER:
             case DATE:
             case TIME_WITHOUT_TIME_ZONE:
-                fieldGetter = row -> row.getInt(fieldPos);
+                fieldGetter = row -> row.getInt(fieldPos); // 访问 32 位整数字段
                 break;
             case BIGINT:
-                fieldGetter = row -> row.getLong(fieldPos);
+                fieldGetter = row -> row.getLong(fieldPos); // 访问 64 位整数字段
                 break;
             case FLOAT:
-                fieldGetter = row -> row.getFloat(fieldPos);
+                fieldGetter = row -> row.getFloat(fieldPos); // 访问 32 位浮点数字段
                 break;
             case DOUBLE:
-                fieldGetter = row -> row.getDouble(fieldPos);
+                fieldGetter = row -> row.getDouble(fieldPos); // 访问 64 位浮点数字段
                 break;
             case TIMESTAMP_WITHOUT_TIME_ZONE:
             case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
                 final int timestampPrecision = getPrecision(fieldType);
-                fieldGetter = row -> row.getTimestamp(fieldPos, timestampPrecision);
+                fieldGetter = row -> row.getTimestamp(fieldPos, timestampPrecision); // 访问时间戳字段
                 break;
             case ARRAY:
-                fieldGetter = row -> row.getArray(fieldPos);
+                fieldGetter = row -> row.getArray(fieldPos); // 访问数组字段
                 break;
             case MULTISET:
             case MAP:
-                fieldGetter = row -> row.getMap(fieldPos);
+                fieldGetter = row -> row.getMap(fieldPos); // 访问映射字段
                 break;
             case ROW:
                 final int rowFieldCount = DataTypeChecks.getFieldCount(fieldType);
-                fieldGetter = row -> row.getRow(fieldPos, rowFieldCount);
+                fieldGetter = row -> row.getRow(fieldPos, rowFieldCount); // 访问结构化行字段
                 break;
             default:
                 String msg =
                         String.format(
-                                "type %s not support in %s",
+                                "不支持的类型 %s 在 %s 中",
                                 fieldType.getTypeRoot().toString(), InternalRow.class.getName());
                 throw new IllegalArgumentException(msg);
         }
+
+        // 如果字段允许为空，则需进行额外的空值检查
         if (!fieldType.isNullable()) {
             return fieldGetter;
         }
         return row -> {
             if (row.isNullAt(fieldPos)) {
-                return null;
+                return null; // 若该字段为空，则返回 null
             }
-            return fieldGetter.getFieldOrNull(row);
+            return fieldGetter.getFieldOrNull(row); // 否则返回字段值
         };
     }
 
-    /** Accessor for getting the field of a row during runtime. */
+    /**
+     * 用于在运行时获取行中字段的访问器接口。
+     */
     interface FieldGetter extends Serializable {
+        /**
+         * 获取指定行中的字段值，如果字段为空，则返回 null。
+         *
+         * @param row 目标行
+         * @return 该字段的值或 null
+         */
         @Nullable
         Object getFieldOrNull(InternalRow row);
     }
+
 }

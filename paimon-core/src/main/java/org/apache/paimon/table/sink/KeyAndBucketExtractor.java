@@ -24,37 +24,72 @@ import org.apache.paimon.types.RowKind;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 
 /**
- * Utility interface to extract partition keys, bucket id, primary keys for file store ({@code
- * trimmedPrimaryKey}) and primary keys for external log system ({@code logPrimaryKey}) from the
- * given record.
+ * 该接口用于从给定的记录中提取：
+ * - 分区键（partition key）
+ * - 存储桶 ID（bucket ID）
+ * - 用于文件存储的主键（trimmedPrimaryKey）
+ * - 用于外部日志系统的主键（logPrimaryKey）
  *
- * @param <T> type of record
+ * @param <T> 记录的类型
  */
-/**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* 从给定记录中提取分区键、存储桶id、文件存储的主键（{@code trimmedPrimaryKey}）和外部日志系统的主键（｛@code logPrimaryKey}）。
-*/
 public interface KeyAndBucketExtractor<T> {
 
+    /**
+     * 设置当前待处理的记录，用于后续提取分区键、桶 ID 和主键信息。
+     *
+     * @param record 当前待处理的记录
+     */
     void setRecord(T record);
 
+    /**
+     * 获取当前记录对应的分区键（Partition Key）。
+     *
+     * @return 记录的分区键
+     */
     BinaryRow partition();
 
+    /**
+     * 获取当前记录的桶 ID（Bucket ID）。
+     *
+     * @return 桶 ID
+     */
     int bucket();
 
+    /**
+     * 获取当前记录的主键（用于文件存储）。
+     *
+     * @return 主键（去除了不必要字段）
+     */
     BinaryRow trimmedPrimaryKey();
 
+    /**
+     * 获取当前记录的主键（用于外部日志存储）。
+     *
+     * @return 日志系统主键
+     */
     BinaryRow logPrimaryKey();
 
+    /**
+     * 计算存储桶键（Bucket Key）的哈希值。
+     *
+     * @param bucketKey 存储桶键
+     * @return 计算得到的哈希值
+     */
     static int bucketKeyHashCode(BinaryRow bucketKey) {
-        assert bucketKey.getRowKind() == RowKind.INSERT;
+        assert bucketKey.getRowKind() == RowKind.INSERT; // 只允许 INSERT 记录
         return bucketKey.hashCode();
     }
 
+    /**
+     * 计算桶 ID。
+     *
+     * @param hashcode    记录的哈希值
+     * @param numBuckets  存储桶的数量
+     * @return 计算得到的桶 ID
+     */
     static int bucket(int hashcode, int numBuckets) {
-        checkArgument(numBuckets > 0, "Num bucket is illegal: " + numBuckets);
-        return Math.abs(hashcode % numBuckets);
+        checkArgument(numBuckets > 0, "桶的数量必须大于 0: " + numBuckets);
+        return Math.abs(hashcode % numBuckets); // 取模运算确保桶 ID 在合法范围内
     }
 }
+

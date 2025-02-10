@@ -44,9 +44,9 @@ import java.util.OptionalLong;
  * @since 0.4.0
  */
 /**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
+* 
+* 
+* 
 * 表为表类型、表扫描和表读取提供了基本的抽象。
 */
 @Public
@@ -56,9 +56,9 @@ public interface Table extends Serializable {
 
     /** A name to identify this table. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
+    * 
+    * 
+    * 
     * 用于标识此表的名称。
     */
     String name();
@@ -69,54 +69,54 @@ public interface Table extends Serializable {
 
     /** Returns the row type of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 返回此表的行类型。
      */
     RowType rowType();
 
     /** Partition keys of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 此表的分区键。
      */
     List<String> partitionKeys();
 
     /** Primary keys of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 此表的主键。
      */
     List<String> primaryKeys();
 
     /** Options of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 此表的Options。
      */
     Map<String, String> options();
 
     /** Optional comment of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 表的comment
      */
     Optional<String> comment();
 
     /** Optional statistics of this table. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 此表的可选统计信息。
      */
     @Experimental
@@ -126,18 +126,18 @@ public interface Table extends Serializable {
 
     /** Copy this table with adding dynamic options. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 复制此表并添加动态选项。
      */
     Table copy(Map<String, String> dynamicOptions);
 
     /** Get the latest snapshot id for this table, or empty if there are no snapshots. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 获取此表的最新快照id，如果没有快照，则为空。
      */
     @Experimental
@@ -145,9 +145,9 @@ public interface Table extends Serializable {
 
     /** Get the {@link Snapshot} from snapshot id. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 从快照id获取｛@link Snapshot｝。
      */
     @Experimental
@@ -155,9 +155,9 @@ public interface Table extends Serializable {
 
     /** Reader to read manifest file meta from manifest list file. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 读取器从清单列表文件读取清单文件元。
      */
     @Experimental
@@ -165,9 +165,9 @@ public interface Table extends Serializable {
 
     /** Reader to read manifest entry from manifest file. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 读取器从清单文件读取清单条目。
      */
     @Experimental
@@ -175,9 +175,9 @@ public interface Table extends Serializable {
 
     /** Reader to read index manifest entry from index manifest file. */
     /**
-     * @授课老师: 码界探索
-     * @微信: 252810631
-     * @版权所有: 请尊重劳动成果
+     * 
+     * 
+     * 
      * 读取器从索引清单文件读取索引清单条目。
      */
     @Experimental

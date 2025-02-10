@@ -28,24 +28,43 @@ import org.apache.flink.table.factories.DynamicTableFactory;
 
 import javax.annotation.Nullable;
 
-/** Table sink to create sink. */
+/**
+ * 自定义 Flink Table Sink，实现数据表的写入能力，并支持行级操作和表截断功能。
+ */
 public class FlinkTableSink extends SupportsRowLevelOperationFlinkTableSink
         implements SupportsTruncate {
 
+    /**
+     * 构造方法，初始化 FlinkTableSink。
+     *
+     * @param tableIdentifier      表的唯一标识符（包括数据库和表名）
+     * @param table                需要写入的目标表
+     * @param context              动态表工厂的上下文信息，包含配置信息
+     * @param logStoreTableFactory （可选）日志存储表工厂，用于增量数据存储
+     */
     public FlinkTableSink(
             ObjectIdentifier tableIdentifier,
             Table table,
             DynamicTableFactory.Context context,
             @Nullable LogStoreTableFactory logStoreTableFactory) {
+        // 调用父类构造方法，初始化表标识、表对象、上下文和日志存储表工厂
         super(tableIdentifier, table, context, logStoreTableFactory);
     }
 
+    /**
+     * 执行表截断操作，清空表中的所有数据。
+     * 该方法使用表的批量提交功能（BatchTableCommit）来执行表截断。
+     * 如果执行过程中发生异常，则抛出运行时异常。
+     */
     @Override
     public void executeTruncation() {
         try (BatchTableCommit batchTableCommit = table.newBatchWriteBuilder().newCommit()) {
+            // 调用 BatchTableCommit 的 truncateTable 方法，清空表数据
             batchTableCommit.truncateTable();
         } catch (Exception e) {
+            // 捕获异常并包装为运行时异常抛出
             throw new RuntimeException(e);
         }
     }
 }
+

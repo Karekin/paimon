@@ -30,66 +30,83 @@ import java.util.List;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 import static org.apache.paimon.utils.Preconditions.checkNotNull;
 
-/** Allocate memory segment from memory manager in flink for paimon. */
 /**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* 从flink内存管理器为paimon分配内存段
-*/
+ * 从 Flink 内存管理器为 Paimon 分配内存段（MemorySegment）。
+ */
 public class MemorySegmentAllocator {
+
+    // 任务拥有者对象
     private final Object owner;
+
+    // Flink 内存管理器
     private final MemoryManager memoryManager;
+
+    // 存储已分配的内存段
     private final List<org.apache.flink.core.memory.MemorySegment> allocatedSegments;
+
+    // 临时存储分配的内存段，用于分配时的中转
     private final List<org.apache.flink.core.memory.MemorySegment> segments;
+
+    // 反射获取 Flink MemorySegment 内部的 offHeapBuffer 字段
     private final Field offHeapBufferField;
 
+    /**
+     * 构造函数，初始化分配器，并获取 MemorySegment 的 offHeapBuffer 字段。
+     *
+     * @param owner 任务拥有者对象
+     * @param memoryManager Flink 内存管理器
+     */
     public MemorySegmentAllocator(Object owner, MemoryManager memoryManager) {
         this.owner = owner;
         this.memoryManager = memoryManager;
         this.allocatedSegments = new ArrayList<>();
         this.segments = new ArrayList<>(1);
+
         try {
+            // 通过反射获取 Flink MemorySegment 的 offHeapBuffer 字段
             this.offHeapBufferField =
-                    org.apache.flink.core.memory.MemorySegment.class.getDeclaredField(
-                            "offHeapBuffer");
+                    org.apache.flink.core.memory.MemorySegment.class.getDeclaredField("offHeapBuffer");
             this.offHeapBufferField.setAccessible(true);
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
     }
 
-    /** Allocates a set of memory segments for memory pool. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 为内存池分配一组内存段。
-    */
+     * 为内存池分配一个新的内存段。
+     *
+     * @return 分配的内存段
+     */
     public MemorySegment allocate() {
         segments.clear();
         try {
+            // 从 Flink 内存管理器分配一个页面
             memoryManager.allocatePages(owner, segments, 1);
             org.apache.flink.core.memory.MemorySegment segment = segments.remove(0);
-            checkNotNull(segment, "Allocate null segment from memory manager for paimon.");
+
+            // 确保分配的内存段不为空
+            checkNotNull(segment, "Allocate null segment from memory manager for Paimon.");
+
+            // 确保分配的是堆外内存（off-heap）
             checkArgument(segment.isOffHeap(), "Segment is not off heap from memory manager.");
+
+            // 将分配的内存段加入已分配列表
             allocatedSegments.add(segment);
-            // TODO Use getOffHeapBuffer in MemorySegment after
-            // https://issues.apache.org/jira/browse/FLINK-32213
+
+            // 通过反射获取内存段的 ByteBuffer，并将其包装为 Paimon 的 MemorySegment
+            // TODO: 在 Flink 相关 issue 解决后（https://issues.apache.org/jira/browse/FLINK-32213），
+            // 直接使用 MemorySegment 提供的方法替代反射。
             return MemorySegment.wrapOffHeapMemory((ByteBuffer) offHeapBufferField.get(segment));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    /* Release the segments allocated by the allocator if the task is closed. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 如果任务已关闭，则释放分配器分配的段。
-    */
+     * 释放所有已分配的内存段，如果任务已关闭，则调用此方法进行释放。
+     */
     public void release() {
         memoryManager.release(allocatedSegments);
     }
 }
+

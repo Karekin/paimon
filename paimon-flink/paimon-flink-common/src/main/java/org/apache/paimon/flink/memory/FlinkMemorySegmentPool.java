@@ -22,24 +22,35 @@ import org.apache.paimon.memory.AbstractMemorySegmentPool;
 import org.apache.paimon.memory.MemorySegment;
 
 /**
- * Flink memory segment pool allocates segment from flink managed memory for paimon writer buffer.
+ * Flink 内存段池（MemorySegmentPool），用于从 Flink 管理的内存中为 Paimon Writer 缓冲区分配内存段。
+ *
+ * 该类继承自 AbstractMemorySegmentPool，利用 Flink 提供的内存管理机制来动态分配和管理内存段。
  */
-/**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* Flink内存段池从Flink管理的内存中为paimon writer缓冲区分配段。
-*/
 public class FlinkMemorySegmentPool extends AbstractMemorySegmentPool {
+
+    // 内存分配器，从 Flink 内存管理器中分配内存段
     private final MemorySegmentAllocator allocator;
 
+    /**
+     * 构造函数，初始化 FlinkMemorySegmentPool。
+     *
+     * @param maxMemory 内存池的最大可用内存大小（字节）
+     * @param pageSize  每个内存页的大小（字节）
+     * @param allocator Flink 内存分配器，用于从 Flink 内存管理器中分配内存段
+     */
     public FlinkMemorySegmentPool(long maxMemory, int pageSize, MemorySegmentAllocator allocator) {
         super(maxMemory, pageSize);
         this.allocator = allocator;
     }
 
+    /**
+     * 从 Flink 内存管理器分配一个新的内存段。
+     *
+     * @return 分配的内存段
+     */
     @Override
     protected MemorySegment allocateMemory() {
         return allocator.allocate();
     }
 }
+

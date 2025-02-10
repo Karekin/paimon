@@ -18,15 +18,40 @@
 
 package org.apache.paimon.memory;
 
-/** A class provides memory related methods. */
+/**
+ * 提供内存管理相关方法的接口。
+ *
+ * <p>实现该接口的类可以管理自己的内存池（MemorySegmentPool），
+ * 并提供查询内存占用情况以及释放内存的方法。
+ */
 public interface MemoryOwner {
 
-    /** Set {@link MemorySegmentPool} for the owner. */
+    /**
+     * 为该内存所有者（MemoryOwner）设置 {@link MemorySegmentPool}。
+     *
+     * <p>内存池用于分配和管理内存页（MemorySegment）。
+     *
+     * @param memoryPool 需要设置的内存池
+     */
     void setMemoryPool(MemorySegmentPool memoryPool);
 
-    /** Memory occupancy size of this owner. */
+    /**
+     * 获取当前内存所有者的内存占用大小。
+     *
+     * <p>该方法返回当前分配给该 MemoryOwner 的内存字节数。
+     *
+     * @return 内存占用大小（字节）
+     */
     long memoryOccupancy();
 
-    /** Flush memory of owner, release memory. */
+    /**
+     * 刷新（flush）并释放该内存所有者的内存。
+     *
+     * <p>该方法通常用于释放占用的内存资源，以便其他组件可以使用这些内存。
+     * 在内存不足时，该方法可能会被调用以回收部分内存。
+     *
+     * @throws Exception 如果在释放内存时发生错误
+     */
     void flushMemory() throws Exception;
 }
+
