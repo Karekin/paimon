@@ -55,7 +55,7 @@ public class PaimonSource {
                 "   PRIMARY KEY ( `id` ) NOT ENFORCED\n" +
                 ") WITH (\n" +
                 "'connector' = 'mysql-cdc',\n" +
-                "'hostname' = '192.168.0.104',\n" +
+                "'hostname' = '192.168.0.109',\n" +
                 "'port' = '3306',\n" +
                 "'username' = 'root',\n" +
                 "'password' = '666666',\n" +
