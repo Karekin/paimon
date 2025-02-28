@@ -27,37 +27,52 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The {@code SplitAssigner} is responsible for deciding what splits should be processed next by
- * which node. It determines split processing order and locality.
+ * 切片分配器，负责决定哪些切片应该由哪些节点处理，确定切片处理的顺序和本地性。
  */
 public interface SplitAssigner {
 
     /**
-     * Gets the next split.
+     * 获取下一个切片。
      *
-     * <p>When this method returns an empty {@code Optional}, then the set of splits is assumed to
-     * be done and the source will finish once the readers finished their current splits.
+     * <p>当此方法返回空的 {@code Optional} 时，表示切片集合已完成，源将在读取器完成当前切片后结束。
      */
     List<FileStoreSourceSplit> getNext(int subtask, @Nullable String hostname);
 
-    /** Add one split of a specified subtask to the assigner. */
+    /**
+     * 向分配器添加指定子任务的切片。
+     *
+     * @param suggestedTask 建议的子任务 ID
+     * @param splits 切片
+     */
     void addSplit(int suggestedTask, FileStoreSourceSplit splits);
 
     /**
-     * Adds a set of splits to this assigner. This happens for example when some split processing
-     * failed and the splits need to be re-added, or when new splits got discovered.
+     * 将一组切片添加到分配器中。这通常发生在某些切片处理失败需要重新添加，或发现新的切片需要处理时。
+     *
+     * @param subtask 子任务 ID
+     * @param splits 切片列表
      */
     void addSplitsBack(int subtask, List<FileStoreSourceSplit> splits);
 
-    /** Gets the remaining splits that this assigner has pending. */
+    /**
+     * 获取分配器中待处理的剩余切片。
+     *
+     * @return 剩余切片的集合
+     */
     Collection<FileStoreSourceSplit> remainingSplits();
 
-    /** Gets the snapshot id of the next split. */
+    /**
+     * 获取下一个切片的快照 ID。
+     *
+     * @param subtask 子任务 ID
+     * @return 下一个快照 ID
+     */
     Optional<Long> getNextSnapshotId(int subtask);
 
     /**
-     * Gets the current number of remaining splits. This method should be guaranteed to be
-     * thread-safe.
+     * 获取分配器中剩余的切片数量。此方法必须是线程安全的。
+     *
+     * @return 剩余切片的数量
      */
     int numberOfRemainingSplits();
 }

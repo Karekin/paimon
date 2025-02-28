@@ -25,40 +25,59 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The {@code FileStoreSplitGenerator}'s task is to plan all files to be read and to split them into
- * a set of {@link FileStoreSourceSplit}.
+ * 文件存储切片生成器，负责计划所有要读取的文件，并将它们拆分为一组 {@link FileStoreSourceSplit}.
  */
 public class FileStoreSourceSplitGenerator {
 
     /**
-     * The current Id as a mutable string representation. This covers more values than the integer
-     * value range, so we should never overflow.
+     * 当前 ID 以可变的字符串形式表示。这比整数值范围覆盖的值更多，所以应该永远不会溢出。
      */
     private final char[] currentId = "0000000000".toCharArray();
 
+    /**
+     * 根据表扫描计划创建切片。
+     *
+     * @param plan 表扫描计划
+     * @return 切片列表
+     */
     public List<FileStoreSourceSplit> createSplits(TableScan.Plan plan) {
         return plan.splits().stream()
                 .map(s -> new FileStoreSourceSplit(getNextId(), s))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 根据切片列表创建切片。
+     *
+     * @param splits 切片列表
+     * @return 切片列表
+     */
     public List<FileStoreSourceSplit> createSplits(List<Split> splits) {
         return splits.stream()
                 .map(s -> new FileStoreSourceSplit(getNextId(), s))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 获取下一个唯一的切片 ID。
+     *
+     * @return 下一个切片 ID
+     */
     protected final String getNextId() {
-        // because we just increment numbers, we increment the char representation directly,
-        // rather than incrementing an integer and converting it to a string representation
-        // every time again (requires quite some expensive conversion logic).
+        // 由于我们只是递增数字，因此我们直接递增字符表示，而不是递增整数并将其转换为字符串表示。
         incrementCharArrayByOne(currentId, currentId.length - 1);
         return new String(currentId);
     }
 
+    /**
+     * 递增字符数组的值。
+     *
+     * @param array 字符数组
+     * @param pos 当前位置
+     */
     private static void incrementCharArrayByOne(char[] array, int pos) {
         if (pos < 0) {
-            throw new RuntimeException("Produce too many splits.");
+            throw new RuntimeException("生成了太多切片。");
         }
 
         char c = array[pos];
@@ -66,7 +85,7 @@ public class FileStoreSourceSplitGenerator {
 
         if (c > '9') {
             c = '0';
-            incrementCharArrayByOne(array, pos - 1);
+            incrementCharArrayByOne(array, pos - 1); // 进位操作
         }
         array[pos] = c;
     }

@@ -31,11 +31,6 @@ import java.io.Serializable;
 import static org.apache.paimon.types.DataTypeChecks.getPrecision;
 import static org.apache.paimon.types.DataTypeChecks.getScale;
 
-/* 该文件基于 Apache Flink 项目 (https://flink.apache.org/) 的源代码，
- * 由 Apache 软件基金会 (ASF) 在 Apache 许可证 2.0 版本下授权使用。
- * 详情请参阅随本工作分发的 NOTICE 文件，以获取有关版权归属的其他信息。
- */
-
 /**
  * 内部数据结构的基本接口，表示 {@link RowType} 类型的数据。
  *

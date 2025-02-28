@@ -25,38 +25,46 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * An input split for reading.
+ * 用于读取的输入切片。
  *
  * @since 0.4.0
  */
 @Public
 public interface Split extends Serializable {
 
+    /**
+     * 获取切片中的行数。
+     *
+     * @return 切片中的行数
+     */
     long rowCount();
 
     /**
-     * If all files in this split can be read without merging, returns an {@link Optional} wrapping
-     * a list of {@link RawFile}s to be read without merging. Otherwise, returns {@link
-     * Optional#empty()}.
+     * 如果此切片中的所有文件都可以在不进行合并的情况下直接读取，则返回一个包含要读取的原始文件列表的 {@link Optional}。
+     * 否则，返回 {@link Optional#empty()}。
+     *
+     * @return 原始文件列表
      */
     default Optional<List<RawFile>> convertToRawFiles() {
         return Optional.empty();
     }
 
     /**
-     * Return the deletion file of the data file, indicating which row in the data file was deleted.
+     * 返回数据文件对应的删除文件，表示数据文件中的哪些行被删除。
+     * 如果没有对应的删除文件，则返回 null。
      *
-     * <p>If there is no corresponding deletion file, the element will be null.
+     * @return 删除文件列表
      */
     default Optional<List<DeletionFile>> deletionFiles() {
         return Optional.empty();
     }
 
     /**
-     * * Return the index file of the data file, for example, bloom-filter index. All the type of
-     * indexes and columns will be stored in one single index file.
+     * 返回数据文件的索引文件，例如布隆过滤器索引。
+     * 所有类型的索引和列都将存储在一个单一的索引文件中。
+     * 如果没有对应的索引文件，则返回 null。
      *
-     * <p>If there is no corresponding index file, the element will be null.
+     * @return 索引文件列表
      */
     default Optional<List<IndexFile>> indexFiles() {
         return Optional.empty();

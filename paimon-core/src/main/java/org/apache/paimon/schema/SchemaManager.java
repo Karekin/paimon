@@ -72,41 +72,62 @@ import static org.apache.paimon.utils.BranchManager.DEFAULT_MAIN_BRANCH;
 import static org.apache.paimon.utils.FileUtils.listVersionedFiles;
 import static org.apache.paimon.utils.Preconditions.checkState;
 
-/** Schema Manager to manage schema versions. */
+/**
+ * SchemaManager 用于管理 Schema 的版本。
+ * 这个类支持 Schema 的版本管理，包括读取、写入、更新和清理等操作。
+ * 它通过文件系统存储 Schema，支持多分支管理，并提供了并发控制机制。
+ */
 @ThreadSafe
 public class SchemaManager implements Serializable {
 
+    // 前缀用于标识 schema 文件
     private static final String SCHEMA_PREFIX = "schema-";
 
+    // 文件 IO 操作工具
     private final FileIO fileIO;
+
+    // 表的根目录路径
     private final Path tableRoot;
 
+    // 可选的锁，用于并发控制
     @Nullable private transient Lock lock;
 
+    // 当前分支名称
     private final String branch;
 
+    // 构造函数，使用默认分支
     public SchemaManager(FileIO fileIO, Path tableRoot) {
         this(fileIO, tableRoot, DEFAULT_MAIN_BRANCH);
     }
 
-    /** Specify the default branch for data writing. */
+    /**
+     * 构造函数，指定分支名称。
+     * 如果传入的分支名称为空，则使用默认分支。
+     */
     public SchemaManager(FileIO fileIO, Path tableRoot, String branch) {
         this.fileIO = fileIO;
         this.tableRoot = tableRoot;
         this.branch = StringUtils.isBlank(branch) ? DEFAULT_MAIN_BRANCH : branch;
     }
 
+    // 创建一个新的 SchemaManager 实例，指定分支名称
     public SchemaManager copyWithBranch(String branchName) {
         return new SchemaManager(fileIO, tableRoot, branchName);
     }
 
+    // 设置锁，用于并发控制
     public SchemaManager withLock(@Nullable Lock lock) {
         this.lock = lock;
         return this;
     }
 
+    /**
+     * 获取最新的 schema。
+     * 如果不存在任何 schema，则返回空。
+     */
     public Optional<TableSchema> latest() {
         try {
+            // 列出所有版本化的文件，取最大版本号对应的 schema
             return listVersionedFiles(fileIO, schemaDirectory(), SCHEMA_PREFIX)
                     .reduce(Math::max)
                     .map(this::schema);
@@ -115,13 +136,18 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 获取所有 schema 的列表
     public List<TableSchema> listAll() {
         return listAllIds().stream().map(this::schema).collect(Collectors.toList());
     }
 
-    /** List all schema IDs. */
+    /**
+     * 列出所有 schema 的 ID。
+     * 如果不存在 schema，则返回空列表。
+     */
     public List<Long> listAllIds() {
         try {
+            // 列出所有版本化的文件，返回版本号列表
             return listVersionedFiles(fileIO, schemaDirectory(), SCHEMA_PREFIX)
                     .collect(Collectors.toList());
         } catch (IOException e) {
@@ -129,15 +155,22 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    /**
+     * 创建表的 schema。
+     * 如果表已存在且 `ignoreIfExistsSame` 为 true，则返回已存在的 schema。
+     * 如果表已存在且 schema 不同，则抛出异常。
+     */
     public TableSchema createTable(Schema schema) throws Exception {
         return createTable(schema, false);
     }
 
     public TableSchema createTable(Schema schema, boolean ignoreIfExistsSame) throws Exception {
         while (true) {
+            // 获取最新的 schema
             Optional<TableSchema> latest = latest();
             if (latest.isPresent()) {
                 TableSchema oldSchema = latest.get();
+                // 比较新旧 schema 是否相同
                 boolean isSame =
                         Objects.equals(oldSchema.fields(), schema.fields())
                                 && Objects.equals(oldSchema.partitionKeys(), schema.partitionKeys())
@@ -153,6 +186,7 @@ public class SchemaManager implements Serializable {
                                 + oldSchema);
             }
 
+            // 如果不存在 schema，则创建新的 schema
             List<DataField> fields = schema.fields();
             List<String> partitionKeys = schema.partitionKeys();
             List<String> primaryKeys = schema.primaryKeys();
@@ -176,32 +210,40 @@ public class SchemaManager implements Serializable {
         }
     }
 
-    /** Update {@link SchemaChange}s. */
+    /**
+     * 提交 schema 的变更。
+     * 支持多种类型的变更，例如添加列、删除列、修改列类型等。
+     */
     public TableSchema commitChanges(SchemaChange... changes) throws Exception {
         return commitChanges(Arrays.asList(changes));
     }
 
-    /** Update {@link SchemaChange}s. */
     public TableSchema commitChanges(List<SchemaChange> changes)
             throws Catalog.TableNotExistException, Catalog.ColumnAlreadyExistException,
-                    Catalog.ColumnNotExistException {
+            Catalog.ColumnNotExistException {
+        // 获取快照管理器
         SnapshotManager snapshotManager = new SnapshotManager(fileIO, tableRoot, branch);
         boolean hasSnapshots = (snapshotManager.latestSnapshotId() != null);
 
         while (true) {
+            // 获取最新的 schema
             TableSchema oldTableSchema =
                     latest().orElseThrow(
-                                    () ->
-                                            new Catalog.TableNotExistException(
-                                                    identifierFromPath(
-                                                            tableRoot.toString(), true, branch)));
+                            () ->
+                                    new Catalog.TableNotExistException(
+                                            identifierFromPath(
+                                                    tableRoot.toString(), true, branch)));
+            // 复制旧的 schema 的选项和字段
             Map<String, String> oldOptions = new HashMap<>(oldTableSchema.options());
             Map<String, String> newOptions = new HashMap<>(oldTableSchema.options());
             List<DataField> newFields = new ArrayList<>(oldTableSchema.fields());
             AtomicInteger highestFieldId = new AtomicInteger(oldTableSchema.highestFieldId());
             String newComment = oldTableSchema.comment();
+
+            // 遍历所有变更，更新 schema
             for (SchemaChange change : changes) {
                 if (change instanceof SetOption) {
+                    // 设置选项
                     SetOption setOption = (SetOption) change;
                     if (hasSnapshots) {
                         checkAlterTableOption(
@@ -212,15 +254,18 @@ public class SchemaManager implements Serializable {
                     }
                     newOptions.put(setOption.key(), setOption.value());
                 } else if (change instanceof RemoveOption) {
+                    // 删除选项
                     RemoveOption removeOption = (RemoveOption) change;
                     if (hasSnapshots) {
                         checkResetTableOption(removeOption.key());
                     }
                     newOptions.remove(removeOption.key());
                 } else if (change instanceof UpdateComment) {
+                    // 更新注释
                     UpdateComment updateComment = (UpdateComment) change;
                     newComment = updateComment.comment();
                 } else if (change instanceof AddColumn) {
+                    // 添加列
                     AddColumn addColumn = (AddColumn) change;
                     SchemaChange.Move move = addColumn.move();
                     if (newFields.stream().anyMatch(f -> f.name().equals(addColumn.fieldName()))) {
@@ -241,7 +286,7 @@ public class SchemaManager implements Serializable {
                             new DataField(
                                     id, addColumn.fieldName(), dataType, addColumn.description());
 
-                    // key: name ; value : index
+                    // 根据指定位置插入列
                     Map<String, Integer> map = new HashMap<>();
                     for (int i = 0; i < newFields.size(); i++) {
                         map.put(newFields.get(i).name(), i);
@@ -257,8 +302,8 @@ public class SchemaManager implements Serializable {
                     } else {
                         newFields.add(dataField);
                     }
-
                 } else if (change instanceof RenameColumn) {
+                    // 重命名列
                     RenameColumn rename = (RenameColumn) change;
                     validateNotPrimaryAndPartitionKey(oldTableSchema, rename.fieldName());
                     if (newFields.stream().anyMatch(f -> f.name().equals(rename.newName()))) {
@@ -278,6 +323,7 @@ public class SchemaManager implements Serializable {
                                             field.type(),
                                             field.description()));
                 } else if (change instanceof DropColumn) {
+                    // 删除列
                     DropColumn drop = (DropColumn) change;
                     validateNotPrimaryAndPartitionKey(oldTableSchema, drop.fieldName());
                     if (!newFields.removeIf(
@@ -290,6 +336,7 @@ public class SchemaManager implements Serializable {
                         throw new IllegalArgumentException("Cannot drop all fields in table");
                     }
                 } else if (change instanceof UpdateColumnType) {
+                    // 更新列类型
                     UpdateColumnType update = (UpdateColumnType) change;
                     if (oldTableSchema.partitionKeys().contains(update.fieldName())) {
                         throw new IllegalArgumentException(
@@ -308,7 +355,7 @@ public class SchemaManager implements Serializable {
                                 checkState(
                                         DataTypeCasts.supportsExplicitCast(field.type(), targetType)
                                                 && CastExecutors.resolve(field.type(), targetType)
-                                                        != null,
+                                                != null,
                                         String.format(
                                                 "Column type %s[%s] cannot be converted to %s without loosing information.",
                                                 field.name(), field.type(), targetType));
@@ -323,6 +370,7 @@ public class SchemaManager implements Serializable {
                                         field.id(), field.name(), targetType, field.description());
                             });
                 } else if (change instanceof UpdateColumnNullability) {
+                    // 更新列的可空性
                     UpdateColumnNullability update = (UpdateColumnNullability) change;
                     if (update.fieldNames().length == 1
                             && update.newNullability()
@@ -341,6 +389,7 @@ public class SchemaManager implements Serializable {
                                             field.type().copy(update.newNullability()),
                                             field.description()));
                 } else if (change instanceof UpdateColumnComment) {
+                    // 更新列的注释
                     UpdateColumnComment update = (UpdateColumnComment) change;
                     updateNestedColumn(
                             newFields,
@@ -353,6 +402,7 @@ public class SchemaManager implements Serializable {
                                             field.type(),
                                             update.newDescription()));
                 } else if (change instanceof UpdateColumnPosition) {
+                    // 更新列的位置
                     UpdateColumnPosition update = (UpdateColumnPosition) change;
                     SchemaChange.Move move = update.move();
                     applyMove(newFields, move);
@@ -362,8 +412,7 @@ public class SchemaManager implements Serializable {
                 }
             }
 
-            // We change TableSchema to Schema, because we want to deal with primary-key and
-            // partition in options.
+            // 创建新的 schema
             Schema newSchema =
                     new Schema(
                             newFields,
@@ -381,6 +430,7 @@ public class SchemaManager implements Serializable {
                             newSchema.options(),
                             newSchema.comment());
 
+            // 提交新的 schema
             try {
                 boolean success = commit(newTableSchema);
                 if (success) {
@@ -392,6 +442,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 移动列的位置
     public void applyMove(List<DataField> newFields, SchemaChange.Move move) {
         Map<String, Integer> map = new HashMap<>();
         for (int i = 0; i < newFields.size(); i++) {
@@ -403,7 +454,7 @@ public class SchemaManager implements Serializable {
             throw new IllegalArgumentException("Field name not found: " + move.fieldName());
         }
 
-        // Handling FIRST and LAST cases directly since they don't need refIndex
+        // 处理 FIRST 和 LAST 的情况
         switch (move.type()) {
             case FIRST:
                 checkMoveIndexEqual(move, fieldIndex, 0);
@@ -423,12 +474,11 @@ public class SchemaManager implements Serializable {
 
         checkMoveIndexEqual(move, fieldIndex, refIndex);
 
-        // For AFTER and BEFORE, adjust the target index based on current and reference positions
+        // 根据移动类型调整目标索引
         int targetIndex = refIndex;
         if (move.type() == SchemaChange.Move.MoveType.AFTER && fieldIndex > refIndex) {
             targetIndex++;
         }
-        // Ensure adjustments for moving element forwards or backwards
         if (move.type() == SchemaChange.Move.MoveType.BEFORE && fieldIndex < refIndex) {
             targetIndex--;
         }
@@ -440,7 +490,7 @@ public class SchemaManager implements Serializable {
         moveField(newFields, fieldIndex, targetIndex);
     }
 
-    // Utility method to move a field within the list, handling range checks
+    // 移动字段的工具方法
     private void moveField(List<DataField> newFields, int fromIndex, int toIndex) {
         if (fromIndex < 0 || fromIndex >= newFields.size() || toIndex < 0) {
             return;
@@ -449,6 +499,7 @@ public class SchemaManager implements Serializable {
         newFields.add(toIndex, fieldToMove);
     }
 
+    // 检查移动索引是否合法
     private static void checkMoveIndexEqual(SchemaChange.Move move, int fieldIndex, int refIndex) {
         if (refIndex == fieldIndex) {
             throw new UnsupportedOperationException(
@@ -456,12 +507,13 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 合并 schema
     public boolean mergeSchema(RowType rowType, boolean allowExplicitCast) {
         TableSchema current =
                 latest().orElseThrow(
-                                () ->
-                                        new RuntimeException(
-                                                "It requires that the current schema to exist when calling 'mergeSchema'"));
+                        () ->
+                                new RuntimeException(
+                                        "It requires that the current schema to exist when calling 'mergeSchema'"));
         TableSchema update = SchemaMergingUtils.mergeSchemas(current, rowType, allowExplicitCast);
         if (current.equals(update)) {
             return false;
@@ -474,8 +526,8 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 验证字段是否为主键或分区键
     private void validateNotPrimaryAndPartitionKey(TableSchema schema, String fieldName) {
-        /// TODO support partition and primary keys schema evolution
         if (schema.partitionKeys().contains(fieldName)) {
             throw new UnsupportedOperationException(
                     String.format("Cannot drop/rename partition key[%s]", fieldName));
@@ -486,7 +538,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
-    /** This method is hacky, newFields may be immutable. We should use {@link DataTypeVisitor}. */
+    // 更新嵌套列
     private void updateNestedColumn(
             List<DataField> newFields,
             String[] updateFieldNames,
@@ -524,6 +576,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 更新列
     private void updateColumn(
             List<DataField> newFields,
             String updateFieldName,
@@ -532,8 +585,10 @@ public class SchemaManager implements Serializable {
         updateNestedColumn(newFields, new String[] {updateFieldName}, 0, updateFunc);
     }
 
+    // 提交新的 schema
     @VisibleForTesting
     boolean commit(TableSchema newSchema) throws Exception {
+        // 验证 schema
         SchemaValidation.validateTableSchema(newSchema);
         SchemaValidation.validateFallbackBranch(this, newSchema);
         Path schemaPath = toSchemaPath(newSchema.id());
@@ -545,7 +600,7 @@ public class SchemaManager implements Serializable {
         return lock.runWithLock(callable);
     }
 
-    /** Read schema for schema id. */
+    // 根据 schema ID 获取 schema
     public TableSchema schema(long id) {
         try {
             return JsonSerdeUtil.fromJson(fileIO.readFileUtf8(toSchemaPath(id)), TableSchema.class);
@@ -554,7 +609,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
-    /** Check if a schema exists. */
+    // 检查 schema 是否存在
     public boolean schemaExists(long id) {
         Path path = toSchemaPath(id);
         try {
@@ -567,6 +622,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 从路径加载 schema
     public static TableSchema fromPath(FileIO fileIO, Path path) {
         try {
             return JsonSerdeUtil.fromJson(fileIO.readFileUtf8(path), TableSchema.class);
@@ -575,28 +631,28 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 获取分支路径
     private String branchPath() {
         return BranchManager.branchPath(tableRoot, branch);
     }
 
+    // 获取 schema 目录
     public Path schemaDirectory() {
         return new Path(branchPath() + "/schema");
     }
 
+    // 获取 schema 文件路径
     @VisibleForTesting
     public Path toSchemaPath(long schemaId) {
         return new Path(branchPath() + "/schema/" + SCHEMA_PREFIX + schemaId);
     }
 
-    /**
-     * Delete schema with specific id.
-     *
-     * @param schemaId the schema id to delete.
-     */
+    // 删除指定 ID 的 schema
     public void deleteSchema(long schemaId) {
         fileIO.deleteQuietly(toSchemaPath(schemaId));
     }
 
+    // 检查是否可以修改表的选项
     public static void checkAlterTableOption(
             String key, @Nullable String oldValue, String newValue, boolean fromDynamicOptions) {
         if (CoreOptions.IMMUTABLE_OPTIONS.contains(key)) {
@@ -624,6 +680,7 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 检查是否可以重置表的选项
     public static void checkResetTableOption(String key) {
         if (CoreOptions.IMMUTABLE_OPTIONS.contains(key)) {
             throw new UnsupportedOperationException(
@@ -635,12 +692,14 @@ public class SchemaManager implements Serializable {
         }
     }
 
+    // 检查是否可以修改表的路径
     public static void checkAlterTablePath(String key) {
         if (CoreOptions.PATH.key().equalsIgnoreCase(key)) {
             throw new UnsupportedOperationException("Change path is not supported yet.");
         }
     }
 
+    // 从路径生成表的标识符
     public static Identifier identifierFromPath(String tablePath, boolean ignoreIfUnknownDatabase) {
         return identifierFromPath(tablePath, ignoreIfUnknownDatabase, null);
     }

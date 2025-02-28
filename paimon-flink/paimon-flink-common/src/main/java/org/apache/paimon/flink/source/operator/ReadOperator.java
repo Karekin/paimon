@@ -37,23 +37,33 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.table.data.RowData;
 
 /**
- * The operator that reads the {@link Split splits} received from the preceding {@link
- * MonitorFunction}. Contrary to the {@link MonitorFunction} which has a parallelism of 1, this
- * operator can have DOP > 1.
+ * 读取从前面的 {@link MonitorFunction} 接收到的 {@link Split splits} 的操作符。
+ * 与单例 {@link MonitorFunction} 不同，此操作符可以具有 DOP（并行度）> 1。
  */
 public class ReadOperator extends AbstractStreamOperator<RowData>
         implements OneInputStreamOperator<Split, RowData> {
 
     private static final long serialVersionUID = 1L;
 
+    // 读取构建器
     private final ReadBuilder readBuilder;
 
+    // 用于读取切片数据的 TableRead 对象（暂留）
     private transient TableRead read;
+
+    // 用于重新使用记录（暂留）
     private transient StreamRecord<RowData> reuseRecord;
+
+    // 用于存储重复使用的 row 数据
     private transient FlinkRowData reuseRow;
+
+    // I/O 管理器，用于管理 I/O 资源
     private transient IOManager ioManager;
 
+    // 源 reader 度量
     private transient FileStoreSourceReaderMetrics sourceReaderMetrics;
+
+    // 输入记录计数器
     private transient Counter numRecordsIn;
 
     public ReadOperator(ReadBuilder readBuilder) {
@@ -64,9 +74,9 @@ public class ReadOperator extends AbstractStreamOperator<RowData>
     public void open() throws Exception {
         super.open();
 
+        // 初始化来源读取度量指标
         this.sourceReaderMetrics = new FileStoreSourceReaderMetrics(getMetricGroup());
-        // we create our own gauge for currentEmitEventTimeLag, because this operator is not a
-        // FLIP-27 source and Flink can't automatically calculate this metric
+        // 创建事件时间延迟指标
         getMetricGroup()
                 .gauge(
                         MetricNames.CURRENT_EMIT_EVENT_TIME_LAG,
@@ -78,44 +88,53 @@ public class ReadOperator extends AbstractStreamOperator<RowData>
                                 return System.currentTimeMillis() - eventTime;
                             }
                         });
+        // 获取输入记录计数器
         this.numRecordsIn =
                 InternalSourceReaderMetricGroup.wrap(getMetricGroup())
                         .getIOMetricGroup()
                         .getNumRecordsInCounter();
 
+        // 创建 I/O 管理器
         this.ioManager =
                 IOManager.create(
                         getContainingTask()
                                 .getEnvironment()
                                 .getIOManager()
                                 .getSpillingDirectoriesPaths());
+        // 初始化读取器
         this.read = readBuilder.newRead().withIOManager(ioManager);
+        // 初始化重复使用的 row 数据
         this.reuseRow = new FlinkRowData(null);
+        // 初始化重复使用的记录
         this.reuseRecord = new StreamRecord<>(reuseRow);
     }
 
     @Override
     public void processElement(StreamRecord<Split> record) throws Exception {
+        // 获取切片
         Split split = record.getValue();
-        // update metric when reading a new split
+        // 更新度量
         long eventTime =
                 ((DataSplit) split)
                         .earliestFileCreationEpochMillis()
                         .orElse(FileStoreSourceReaderMetrics.UNDEFINED);
         sourceReaderMetrics.recordSnapshotUpdate(eventTime);
 
+        // 是否是第一个记录的标志
         boolean firstRecord = true;
+
+        // 创建 CloseableIterator 并遍历切片中的数据
         try (CloseableIterator<InternalRow> iterator =
-                read.createReader(split).toCloseableIterator()) {
+                     read.createReader(split).toCloseableIterator()) {
             while (iterator.hasNext()) {
-                // each Split is already counted as one input record,
-                // so we don't need to count the first record
+                // 跳过第一个记录的计数
                 if (firstRecord) {
                     firstRecord = false;
                 } else {
-                    numRecordsIn.inc();
+                    numRecordsIn.inc(); // 输入记录计数器递增
                 }
 
+                // 读取并发送记录
                 reuseRow.replace(iterator.next());
                 output.collect(reuseRecord);
             }
@@ -126,7 +145,7 @@ public class ReadOperator extends AbstractStreamOperator<RowData>
     public void close() throws Exception {
         super.close();
         if (ioManager != null) {
-            ioManager.close();
+            ioManager.close(); // 关闭 I/O 管理器
         }
     }
 }

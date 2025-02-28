@@ -24,28 +24,44 @@ import org.apache.paimon.utils.Restorable;
 import javax.annotation.Nullable;
 
 /**
- * {@link TableScan} for streaming, supports {@link #checkpoint} and {@link #restore}.
+ * 用于流式处理的 {@link TableScan}，支持 {@link #checkpoint} 和 {@link #restore} 方法。
  *
- * <p>NOTE: {@link #checkpoint} will return the next snapshot id.
+ * <p>注意：{@link #checkpoint} 方法将返回下一个快照 ID。
  *
  * @since 0.4.0
  */
 @Public
 public interface StreamTableScan extends TableScan, Restorable<Long> {
 
-    /** Current watermark for consumed snapshot. */
+    /**
+     * 获取当前已消费快照的水印。
+     *
+     * @return 当前水印（可能为 null，表示没有水印）
+     */
     @Nullable
     Long watermark();
 
-    /** Restore from checkpoint next snapshot id. */
+    /**
+     * 从指定的下一个快照 ID 恢复扫描。
+     *
+     * @param nextSnapshotId 下一个快照 ID（可能为 null，表示从头开始扫描）
+     */
     @Override
     void restore(@Nullable Long nextSnapshotId);
 
-    /** Checkpoint to return next snapshot id. */
+    /**
+     * 创建检查点并返回下一个快照 ID。
+     *
+     * @return 下一个快照 ID（可能为 null，表示没有下一个快照）
+     */
     @Nullable
     @Override
     Long checkpoint();
 
-    /** Notifies the checkpoint complete with next snapshot id. */
+    /**
+     * 通知检查点完成，并提供下一个快照 ID。
+     *
+     * @param nextSnapshot 下一个快照 ID（可能为 null，表示没有下一个快照）
+     */
     void notifyCheckpointComplete(@Nullable Long nextSnapshot);
 }
