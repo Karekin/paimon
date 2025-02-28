@@ -492,9 +492,6 @@ public final class MemorySegment {
         }
     }
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
     * 这个方法的作用是将当前内存段的一部分数据复制到另一个内存段中。
     * sun.misc.Unsafe 中的 native 函数，C++实现
     */

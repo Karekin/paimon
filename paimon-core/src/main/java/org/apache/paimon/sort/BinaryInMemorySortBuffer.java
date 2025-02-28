@@ -36,47 +36,39 @@ import java.util.ArrayList;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 
 /**
- * In memory sort buffer for binary row.
- *
- * <ul>
- *   <li>{@link #clear}: Clean all memory.
- *   <li>{@link #tryInitialize}: initialize memory before write and read in buffer.
- * </ul>
+ * 二进制行的内存排序缓冲区。
  */
-/**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* 二进制行的内存排序缓冲区。
-*/
 public class BinaryInMemorySortBuffer extends BinaryIndexedSortable implements SortBuffer {
 
-    private static final int MIN_REQUIRED_BUFFERS = 3;
+    private static final int MIN_REQUIRED_BUFFERS = 3; // 最小需要的缓冲区数量
 
-    private final AbstractRowDataSerializer<InternalRow> inputSerializer;
-    private final ArrayList<MemorySegment> recordBufferSegments;
-    private final SimpleCollectingOutputView recordCollector;
+    private final AbstractRowDataSerializer<InternalRow> inputSerializer; // 输入数据的序列化器
+    private final ArrayList<MemorySegment> recordBufferSegments; // 数据存储的内存段列表
+    private final SimpleCollectingOutputView recordCollector; // 数据收集器
 
-    private long currentDataBufferOffset;
-    private long sortIndexBytes;
-    private boolean isInitialized;
+    private long currentDataBufferOffset; // 当前数据缓冲区的偏移量
+    private long sortIndexBytes; // 排序索引占用的字节数
+    private boolean isInitialized; // 是否已初始化
 
-    /** Create a memory sorter in `insert` way. */
+    /**
+     * 创建一个以插入方式工作的内存排序缓冲区。
+     */
     public static BinaryInMemorySortBuffer createBuffer(
-            NormalizedKeyComputer normalizedKeyComputer,
-            AbstractRowDataSerializer<InternalRow> serializer,
-            RecordComparator comparator,
-            MemorySegmentPool memoryPool) {
-        checkArgument(memoryPool.freePages() >= MIN_REQUIRED_BUFFERS);
-        ArrayList<MemorySegment> recordBufferSegments = new ArrayList<>(16);
+            NormalizedKeyComputer normalizedKeyComputer, // 规范化键计算器
+            AbstractRowDataSerializer<InternalRow> serializer, // 数据序列化器
+            RecordComparator comparator, // 数据比较器
+            MemorySegmentPool memoryPool // 内存池
+    ) {
+        checkArgument(memoryPool.freePages() >= MIN_REQUIRED_BUFFERS); // 检查内存池是否有足够的页
+        ArrayList<MemorySegment> recordBufferSegments = new ArrayList<>(16); // 初始化数据存储的内存段列表
         return new BinaryInMemorySortBuffer(
                 normalizedKeyComputer,
                 serializer,
                 comparator,
                 recordBufferSegments,
-                new SimpleCollectingOutputView(
-                        recordBufferSegments, memoryPool, memoryPool.pageSize()),
-                memoryPool);
+                new SimpleCollectingOutputView(recordBufferSegments, memoryPool, memoryPool.pageSize()), // 初始化数据收集器
+                memoryPool
+        );
     }
 
     private BinaryInMemorySortBuffer(
@@ -85,196 +77,151 @@ public class BinaryInMemorySortBuffer extends BinaryIndexedSortable implements S
             RecordComparator comparator,
             ArrayList<MemorySegment> recordBufferSegments,
             SimpleCollectingOutputView recordCollector,
-            MemorySegmentPool pool) {
+            MemorySegmentPool pool
+    ) {
         super(
                 normalizedKeyComputer,
-                new BinaryRowSerializer(inputSerializer.getArity()),
+                new BinaryRowSerializer(inputSerializer.getArity()), // 初始化BinaryRow序列化器
                 comparator,
                 recordBufferSegments,
-                pool);
-        this.inputSerializer = inputSerializer;
-        this.recordBufferSegments = recordBufferSegments;
-        this.recordCollector = recordCollector;
-        // The memory will be initialized in super()
-        this.isInitialized = true;
-        this.clear();
+                pool
+        );
+        this.inputSerializer = inputSerializer; // 初始化输入序列化器
+        this.recordBufferSegments = recordBufferSegments; // 初始化数据存储的内存段列表
+        this.recordCollector = recordCollector; // 初始化数据收集器
+        this.isInitialized = true; // 设置初始化状态为true
+        this.clear(); // 清空缓冲区
     }
 
-    // -------------------------------------------------------------------------
-    // Memory Segment
-    // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------//
+    // Memory Segment管理
+    // -------------------------------------------------------------------------//
 
     private void returnToSegmentPool() {
-        // return all memory
-        this.memorySegmentPool.returnAll(this.sortIndex);
-        this.memorySegmentPool.returnAll(this.recordBufferSegments);
-        this.sortIndex.clear();
-        this.recordBufferSegments.clear();
+        // 将所有内存段返回到内存池
+        this.memorySegmentPool.returnAll(this.sortIndex); // 返回排序索引的内存段
+        this.memorySegmentPool.returnAll(this.recordBufferSegments); // 返回数据存储的内存段
+        this.sortIndex.clear(); // 清空排序索引的内存段
+        this.recordBufferSegments.clear(); // 清空数据存储的内存段
     }
 
     public int getBufferSegmentCount() {
-        return this.recordBufferSegments.size();
+        return this.recordBufferSegments.size(); // 返回数据存储的内存段数量
     }
 
-    /** Try to initialize the sort buffer if all contained data is discarded. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 如果所有包含的数据都被丢弃，则尝试初始化排序缓冲区。
-    */
+     * 如果所有包含的数据都被丢弃，则尝试初始化排序缓冲区。
+     */
     private void tryInitialize() {
-        // 如果当前对象或组件尚未初始化
         if (!isInitialized) {
-            // grab first buffer
-            // 分配并获取第一个内存段，用作当前的排序索引内存段
-            this.currentSortIndexSegment = nextMemorySegment();
-            // 将当前获取的排序索引内存段添加到排序索引的内存段列表中
-            this.sortIndex.add(this.currentSortIndexSegment);
-            // grab second buffer
-            // 为记录收集器分配或重置第二个内存段（或数据结构）
-            this.recordCollector.reset();
-            // 将初始化状态标记为true，表示当前对象或组件已经完成了初始化
-            this.isInitialized = true;
+            // 初始化排序索引和数据存储的内存段
+            this.currentSortIndexSegment = nextMemorySegment(); // 获取下一个排序索引的内存段
+            this.sortIndex.add(this.currentSortIndexSegment); // 将内存段添加到排序索引列表
+            this.recordCollector.reset(); // 重置数据收集器
+            this.isInitialized = true; // 设置初始化状态为true
         }
     }
 
     @Override
     public void clear() {
         if (this.isInitialized) {
-            // reset all offsets
+            // 重置所有偏移量和状态
             this.numRecords = 0;
             this.currentSortIndexOffset = 0;
             this.currentDataBufferOffset = 0;
             this.sortIndexBytes = 0;
 
-            // return all memory
-            returnToSegmentPool();
-            this.currentSortIndexSegment = null;
-            this.isInitialized = false;
+            returnToSegmentPool(); // 将内存段返回到内存池
+            this.currentSortIndexSegment = null; // 重置当前排序索引的内存段
+            this.isInitialized = false; // 设置初始化状态为false
         }
     }
 
     @Override
     public long getOccupancy() {
-        return this.currentDataBufferOffset + this.sortIndexBytes;
+        return this.currentDataBufferOffset + this.sortIndexBytes; // 返回内存缓冲区的总占用大小
     }
 
     @Override
     public boolean flushMemory() {
-        return false;
+        return false; // 外部溢出逻辑未实现，返回false
     }
 
     boolean isEmpty() {
-        return this.numRecords == 0;
+        return this.numRecords == 0; // 返回缓冲区是否为空
     }
 
     /**
-     * Writes a given record to this sort buffer. The written record will be appended and take the
-     * last logical position.
-     *
-     * @param record The record to be written.
-     * @return True, if the record was successfully written, false, if the sort buffer was full.
-     * @throws IOException Thrown, if an error occurred while serializing the record into the
-     *     buffers.
+     * 将给定的记录写入此排序缓冲区。写入的记录将被追加并占据最后一个逻辑位置。
      */
-    /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    *  将给定的记录写入此排序缓冲区。写入的记录将被追加并占据最后一个逻辑位置。
-    */
     @Override
     public boolean write(InternalRow record) throws IOException {
-        // 尝试初始化排序缓冲区，如果尚未初始化。
-        tryInitialize();
+        tryInitialize(); // 尝试初始化缓冲区
 
-        // check whether we need a new memory segment for the sort index
-        // 检查是否需要为排序索引创建一个新的内存段。
-        // 如果当前内存段没有足够的空间或者已经达到某个条件（如段大小限制），
-        // 则返回false，表示无法继续写入更多记录。
-        if (!checkNextIndexOffset()) {
-            return false;
+        if (!checkNextIndexOffset()) { // 检查是否需要新的内存段
+            return false; // 无法继续写入
         }
 
-        // serialize the record into the data buffers
-        // 序列化记录到数据缓冲区中。
         int skip;
         try {
-            // 将来record通过BinaryRowSerializer序列化到MemorySegment中写入内存，并返回写入的字节数。
-            skip = this.inputSerializer.serializeToPages(record, this.recordCollector);
+            skip = this.inputSerializer.serializeToPages(record, this.recordCollector); // 序列化记录到内存段
         } catch (EOFException e) {
-            return false;
+            return false; // 内存段已满，无法写入
         }
-        // 写完记录后，获取记录收集器当前的总偏移量（即新写入的记录之后的偏移量）。
-        final long newOffset = this.recordCollector.getCurrentOffset();
-        // 计算当前数据缓冲区中记录的实际偏移量
-        long currOffset = currentDataBufferOffset + skip;
-        // 将record对应的偏移量记录到Index MemorySegment。
-        writeIndexAndNormalizedKey(record, currOffset);
-        // 更新排序索引的总字节大小
-        this.sortIndexBytes += this.indexEntrySize;
-        // 更新当前数据缓冲区的偏移量，为下一个记录做准备。
-        this.currentDataBufferOffset = newOffset;
-        // 返回true，表示记录已成功写入。
-        return true;
+
+        final long newOffset = this.recordCollector.getCurrentOffset(); // 获取当前数据缓冲区的偏移量
+        long currOffset = currentDataBufferOffset + skip; // 计算当前数据缓冲区中记录的实际偏移量
+        writeIndexAndNormalizedKey(record, currOffset); // 将记录的偏移量和规范化键写入排序索引
+        this.sortIndexBytes += this.indexEntrySize; // 更新排序索引的总字节大小
+        this.currentDataBufferOffset = newOffset; // 更新当前数据缓冲区的偏移量
+        return true; // 写入成功
     }
 
     private BinaryRow getRecordFromBuffer(BinaryRow reuse, long pointer) throws IOException {
-        this.recordBuffer.setReadPosition(pointer);
-        return this.serializer.mapFromPages(reuse, this.recordBuffer);
+        this.recordBuffer.setReadPosition(pointer); // 设置读取位置
+        return this.serializer.mapFromPages(reuse, this.recordBuffer); // 从内存段读取记录
     }
 
-    // -------------------------------------------------------------------------
+    // -------------------------------------------------------------------------//
 
     /**
-     * Gets an iterator over all records in this buffer in their logical order.
-     *
-     * @return An iterator returning the records in their logical order.
+     * 获取此缓冲区中所有记录的逻辑顺序迭代器。
      */
-    /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 获取此缓冲区中所有记录的逻辑顺序迭代器。
-    */
     private MutableObjectIterator<BinaryRow> iterator() {
-        tryInitialize();
+        tryInitialize(); // 尝试初始化缓冲区
 
         return new MutableObjectIterator<BinaryRow>() {
-            private final int size = size();
-            private int current = 0;
-
-            private int currentSegment = 0;
-            private int currentOffset = 0;
-
-            private MemorySegment currentIndexSegment = sortIndex.get(0);
+            private final int size = size(); // 获取总记录数
+            private int current = 0; // 当前已读取记录数
+            private int currentSegment = 0; // 当前排序索引段索引
+            private int currentOffset = 0; // 当前排序索引段的偏移量
+            private MemorySegment currentIndexSegment = sortIndex.get(0); // 当前排序索引段
 
             @Override
             public BinaryRow next(BinaryRow target) {
                 if (this.current < this.size) {
-                    this.current++;
+                    this.current++; // 已读取记录数加一
                     if (this.currentOffset > lastIndexEntryOffset) {
-                        this.currentOffset = 0;
-                        this.currentIndexSegment = sortIndex.get(++this.currentSegment);
+                        this.currentOffset = 0; // 重置排序索引段的偏移量
+                        this.currentIndexSegment = sortIndex.get(++this.currentSegment); // 获取下一个排序索引段
                     }
 
-                    long pointer = this.currentIndexSegment.getLong(this.currentOffset);
-                    this.currentOffset += indexEntrySize;
+                    long pointer = this.currentIndexSegment.getLong(this.currentOffset); // 获取记录的偏移量
+                    this.currentOffset += indexEntrySize; // 更新排序索引段的偏移量
 
                     try {
-                        return getRecordFromBuffer(target, pointer);
+                        return getRecordFromBuffer(target, pointer); // 从缓冲区读取记录
                     } catch (IOException ioe) {
-                        throw new RuntimeException(ioe);
+                        throw new RuntimeException(ioe); // 将异常包装为运行时异常
                     }
                 } else {
-                    return null;
+                    return null; // 已无记录可读取
                 }
             }
 
             @Override
             public BinaryRow next() {
-                throw new RuntimeException("Not support!");
+                throw new RuntimeException("Not support!"); // 不支持直接next方法
             }
         };
     }
@@ -282,8 +229,8 @@ public class BinaryInMemorySortBuffer extends BinaryIndexedSortable implements S
     @Override
     public final MutableObjectIterator<BinaryRow> sortedIterator() {
         if (numRecords > 0) {
-            new QuickSort().sort(this);
+            new QuickSort().sort(this); // 对缓冲区中的数据进行排序
         }
-        return iterator();
+        return iterator(); // 返回排序后的迭代器
     }
 }
