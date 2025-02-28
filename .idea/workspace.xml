@@ -4,42 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b4c4ac99-5cad-42e3-9468-db772ba6a63f" name="Changes" comment="init">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/scala_compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/scala_compiler.xml" afterDir="false" />
+    <list default="true" id="b4c4ac99-5cad-42e3-9468-db772ba6a63f" name="Changes" comment="doc: 学习paimon源码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/InternalRow.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/InternalRow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/memory/MemorySegmentPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/memory/MemorySegmentPool.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/disk/IOManagerImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/disk/IOManagerImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/memory/MemoryOwner.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/memory/MemoryOwner.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/memory/MemoryPoolFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/memory/MemoryPoolFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeWriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeWriter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreWrite.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreWrite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreWrite.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreWrite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/FileStoreTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/FileStoreTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/PrimaryKeyFileStoreTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/PrimaryKeyFileStoreTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/Table.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/Table.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/KeyAndBucketExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/KeyAndBucketExtractor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableWrite.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableWrite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableWriteImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableWriteImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/RecordWriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/RecordWriter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/PaimonDataStreamSinkProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/PaimonDataStreamSinkProvider.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/memory/FlinkMemorySegmentPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/memory/FlinkMemorySegmentPool.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/memory/MemorySegmentAllocator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/memory/MemorySegmentAllocator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/Committable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/Committable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSink.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSink.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSinkBase.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSinkBase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/PrepareCommitOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/PrepareCommitOperator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWrite.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWrite.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWriteImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWriteImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWriteState.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/StoreSinkWriteState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/manifest/ManifestCommittable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/manifest/ManifestCommittable.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableCommitImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableCommitImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RestoreAndFailCommittableStateManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RestoreAndFailCommittableStateManager.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -95,46 +72,47 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.ApiHelloWord (1).executor&quot;: &quot;Run&quot;,
-    &quot;Application.ApiHelloWord (2).executor&quot;: &quot;Run&quot;,
-    &quot;Application.ApiHelloWord (3).executor&quot;: &quot;Debug&quot;,
-    &quot;Application.ApiHelloWord (4).executor&quot;: &quot;Run&quot;,
-    &quot;Application.ApiHelloWord.executor&quot;: &quot;Debug&quot;,
-    &quot;Application.FlinkSQLDategen.executor&quot;: &quot;Run&quot;,
-    &quot;Application.FlinkSqlLineage.executor&quot;: &quot;Debug&quot;,
-    &quot;Application.LineageDemo1.executor&quot;: &quot;Run&quot;,
-    &quot;Application.PaimonBasicTestSuite.executor&quot;: &quot;Run&quot;,
-    &quot;Application.PaimonKafka.executor&quot;: &quot;Run&quot;,
-    &quot;Application.PaimonQuery.executor&quot;: &quot;Debug&quot;,
-    &quot;Application.PaimonSource.executor&quot;: &quot;Run&quot;,
-    &quot;Application.PaimonSourceAggregate.executor&quot;: &quot;Run&quot;,
-    &quot;Application.PaimonSourceWaterMark.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ParquetQuery.executor&quot;: &quot;Run&quot;,
-    &quot;Maven.paimon-ademo [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.paimon-ademo [package].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.paimon-aquery-parquet [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.paimon-parent [clean].executor&quot;: &quot;Run&quot;,
-    &quot;Maven.paimon-parent [package].executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;0.9-doc&quot;,
-    &quot;jdk.selected.JAVA_MODULE&quot;: &quot;11&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Volumes/karekinSSD1/project/paimon&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;MavenSettings&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.ApiHelloWord (1).executor": "Run",
+    "Application.ApiHelloWord (2).executor": "Run",
+    "Application.ApiHelloWord (3).executor": "Debug",
+    "Application.ApiHelloWord (4).executor": "Run",
+    "Application.ApiHelloWord.executor": "Debug",
+    "Application.FlinkSQLDategen.executor": "Run",
+    "Application.FlinkSqlLineage.executor": "Debug",
+    "Application.LineageDemo1.executor": "Run",
+    "Application.PaimonBasicTestSuite.executor": "Run",
+    "Application.PaimonKafka.executor": "Run",
+    "Application.PaimonQuery.executor": "Debug",
+    "Application.PaimonSource.executor": "Run",
+    "Application.PaimonSourceAggregate.executor": "Run",
+    "Application.PaimonSourceWaterMark.executor": "Run",
+    "Application.ParquetQuery.executor": "Run",
+    "Maven.paimon-ademo [clean].executor": "Run",
+    "Maven.paimon-ademo [package].executor": "Run",
+    "Maven.paimon-aquery-parquet [clean].executor": "Run",
+    "Maven.paimon-parent [clean].executor": "Run",
+    "Maven.paimon-parent [package].executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SONARLINT_PRECOMMIT_ANALYSIS": "false",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "0.9-doc",
+    "jdk.selected.JAVA_MODULE": "11",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/WorkSpace/paimon",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "MavenSettings",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/paimon-plugins" />
@@ -278,6 +256,9 @@
       <workItem from="1737166749759" duration="7199000" />
       <workItem from="1737193997405" duration="16483000" />
       <workItem from="1737251284713" duration="19478000" />
+      <workItem from="1739236272700" duration="5752000" />
+      <workItem from="1739322207583" duration="2646000" />
+      <workItem from="1740720861585" duration="15678000" />
     </task>
     <task id="LOCAL-00001" summary="20241121初始化">
       <option name="closed" value="true" />
@@ -318,7 +299,35 @@
       <option name="project" value="LOCAL" />
       <updated>1737195991996</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="doc: 学习paimon源码">
+      <created>1739180231224</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1739180231224</updated>
+    </task>
+    <task id="LOCAL-00007" summary="doc: 学习paimon源码">
+      <created>1739352942678</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1739352942678</updated>
+    </task>
+    <task id="LOCAL-00008" summary="doc: 学习paimon源码">
+      <created>1740728420722</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1740728420722</updated>
+    </task>
+    <task id="LOCAL-00009" summary="doc: 学习paimon源码">
+      <created>1740733404770</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1740733404770</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -338,7 +347,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="20241121初始化" />
     <MESSAGE value="init" />
-    <option name="LAST_COMMIT_MESSAGE" value="init" />
+    <MESSAGE value="doc: 学习paimon源码" />
+    <option name="LAST_COMMIT_MESSAGE" value="doc: 学习paimon源码" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -455,12 +465,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
-          <line>128</line>
+          <line>132</line>
           <option name="timeStamp" value="324" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/SingleFileWriter.java</url>
-          <line>98</line>
+          <line>137</line>
           <option name="timeStamp" value="330" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -472,11 +482,6 @@
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/RowDataFileWriter.java</url>
           <line>87</line>
           <option name="timeStamp" value="341" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/StatsCollectingSingleFileWriter.java</url>
-          <line>77</line>
-          <option name="timeStamp" value="343" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/RollingFileWriter.java</url>
@@ -502,11 +507,6 @@
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
           <line>979</line>
           <option name="timeStamp" value="485" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RowDataStoreWriteOperator.java</url>
-          <line>141</line>
-          <option name="timeStamp" value="516" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/snapshot/AbstractStartingScanner.java</url>
@@ -565,12 +565,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>881</line>
+          <line>879</line>
           <option name="timeStamp" value="657" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>874</line>
+          <line>875</line>
           <option name="timeStamp" value="658" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -585,12 +585,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
-          <line>196</line>
+          <line>225</line>
           <option name="timeStamp" value="681" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>917</line>
+          <line>935</line>
           <option name="timeStamp" value="683" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -695,17 +695,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSinkBuilder.java</url>
-          <line>211</line>
+          <line>251</line>
           <option name="timeStamp" value="788" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkStreamPartitioner.java</url>
-          <line>71</line>
-          <option name="timeStamp" value="789" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
-          <line>226</line>
+          <line>239</line>
           <option name="timeStamp" value="790" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -1028,12 +1023,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
-          <line>228</line>
+          <line>266</line>
           <option name="timeStamp" value="899" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
-          <line>227</line>
+          <line>265</line>
           <option name="timeStamp" value="900" />
         </line-breakpoint>
         <line-breakpoint type="scala-line">
