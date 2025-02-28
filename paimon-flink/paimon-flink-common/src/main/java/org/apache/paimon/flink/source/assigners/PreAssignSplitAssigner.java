@@ -39,12 +39,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.apache.paimon.flink.utils.TableScanUtils.getSnapshotId;
 
 /**
- * Pre-calculate which splits each task should process according to the weight, and then distribute
- * the splits fairly.
+ * 预先根据权重计算每个任务应该处理哪些分片，然后公平地分配分片。
  */
 public class PreAssignSplitAssigner implements SplitAssigner {
 
-    /** Default batch splits size to avoid exceed `akka.framesize`. */
+    /** 默认分片批量大小，避免超出 `akka.framesize` 限制。 */
     private final int splitBatchSize;
 
     private final Map<Integer, LinkedList<FileStoreSourceSplit>> pendingSplitAssignment;
@@ -63,9 +62,9 @@ public class PreAssignSplitAssigner implements SplitAssigner {
 
     @Override
     public List<FileStoreSourceSplit> getNext(int subtask, @Nullable String hostname) {
-        // The following batch assignment operation is for two purposes:
-        // To distribute splits evenly when batch reading to prevent a few tasks from reading all
-        // the data (for example, the current resource can only schedule part of the tasks).
+        // 分批分配操作有两个目的：
+        // 当批处理读取时，为了防止少数任务读取所有数据（例如，当前资源只能调度部分任务）
+        // 均衡分片分布
         Queue<FileStoreSourceSplit> taskSplits = pendingSplitAssignment.get(subtask);
         List<FileStoreSourceSplit> assignment = new ArrayList<>();
         while (taskSplits != null && !taskSplits.isEmpty() && assignment.size() < splitBatchSize) {
@@ -100,8 +99,7 @@ public class PreAssignSplitAssigner implements SplitAssigner {
     }
 
     /**
-     * this method only reload restore for batch execute, because in streaming mode, we need to
-     * assign certain bucket to certain task.
+     * 此方法仅用于重新加载恢复批处理执行，因为在流模式下，需要将某些桶分配给某些任务。
      */
     private static Map<Integer, LinkedList<FileStoreSourceSplit>> createBatchFairSplitAssignment(
             Collection<FileStoreSourceSplit> splits, int numReaders) {

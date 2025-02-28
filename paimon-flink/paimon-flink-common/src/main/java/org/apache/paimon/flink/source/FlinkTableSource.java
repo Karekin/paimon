@@ -54,7 +54,9 @@ import java.util.Optional;
 
 import static org.apache.paimon.options.OptionsUtils.PAIMON_PREFIX;
 
-/** A Flink {@link ScanTableSource} for paimon. */
+/**
+ * Paimon 的 Flink 扫描数据源。
+ */
 public abstract class FlinkTableSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(FlinkTableSource.class);
@@ -63,15 +65,15 @@ public abstract class FlinkTableSource {
             String.format(
                     "%s%s", PAIMON_PREFIX, FlinkConnectorOptions.INFER_SCAN_PARALLELISM.key());
 
-    protected final Table table;
+    protected final Table table; // 数据表
 
-    @Nullable protected Predicate predicate;
-    @Nullable protected int[][] projectFields;
-    @Nullable protected Long limit;
-    protected SplitStatistics splitStatistics;
+    @Nullable protected Predicate predicate; // 过滤条件
+    @Nullable protected int[][] projectFields; // 投影字段
+    @Nullable protected Long limit; // 查询限制
+    protected SplitStatistics splitStatistics; // 分片统计信息
 
     public FlinkTableSource(Table table) {
-        this(table, null, null, null);
+        this(table, null, null, null); // 调用另一个构造函数
     }
 
     public FlinkTableSource(
@@ -79,76 +81,149 @@ public abstract class FlinkTableSource {
             @Nullable Predicate predicate,
             @Nullable int[][] projectFields,
             @Nullable Long limit) {
-        this.table = table;
-        this.predicate = predicate;
-        this.projectFields = projectFields;
-        this.limit = limit;
+        this.table = table; // 初始化数据表
+        this.predicate = predicate; // 初始化过滤条件
+        this.projectFields = projectFields; // 初始化投影字段
+        this.limit = limit; // 初始化查询限制
     }
 
-    /** @return The unconsumed filters. */
+    /**
+     * 将过滤条件下推到数据源，并返回未被处理的过滤条件。
+     * <p>
+     * 数据源必须确保已处理的过滤条件已完全评估，否则查询结果将不正确。
+     *
+     * @param filters 过滤条件列表
+     * @return 未被处理的过滤条件列表
+     */
     public List<ResolvedExpression> pushFilters(List<ResolvedExpression> filters) {
-        List<String> partitionKeys = table.partitionKeys();
-        RowType rowType = LogicalTypeConversion.toLogicalType(table.rowType());
+        List<String> partitionKeys = table.partitionKeys(); // 获取分区键
+        RowType rowType = LogicalTypeConversion.toLogicalType(table.rowType()); // 获取行类型
 
-        // The source must ensure the consumed filters are fully evaluated, otherwise the result
-        // of query will be wrong.
-        List<ResolvedExpression> unConsumedFilters = new ArrayList<>();
-        List<ResolvedExpression> consumedFilters = new ArrayList<>();
-        List<Predicate> converted = new ArrayList<>();
-        PredicateVisitor<Boolean> visitor = new PartitionPredicateVisitor(partitionKeys);
+        List<ResolvedExpression> unConsumedFilters = new ArrayList<>(); // 未被处理的过滤条件
+        List<ResolvedExpression> consumedFilters = new ArrayList<>(); // 已被处理的过滤条件
+        List<Predicate> converted = new ArrayList<>(); // 转换后的条件
+        PredicateVisitor<Boolean> visitor = new PartitionPredicateVisitor(partitionKeys); // 访问者
 
         for (ResolvedExpression filter : filters) {
             Optional<Predicate> predicateOptional = PredicateConverter.convert(rowType, filter);
 
             if (!predicateOptional.isPresent()) {
-                unConsumedFilters.add(filter);
+                unConsumedFilters.add(filter); // 过滤条件无法转换，添加到未处理列表
             } else {
                 Predicate p = predicateOptional.get();
                 if (isStreaming() || !p.visit(visitor)) {
-                    unConsumedFilters.add(filter);
+                    unConsumedFilters.add(filter); // 条件不满足，添加到未处理列表
                 } else {
-                    consumedFilters.add(filter);
+                    consumedFilters.add(filter); // 条件满足，添加到已处理列表
                 }
-                converted.add(p);
+                converted.add(p); // 添加转换后的条件
             }
         }
-        predicate = converted.isEmpty() ? null : PredicateBuilder.and(converted);
-        LOG.info("Consumed filters: {} of {}", consumedFilters, filters);
+        predicate = converted.isEmpty() ? null : PredicateBuilder.and(converted); // 合并条件
+        LOG.info("过滤条件: {} / {}", consumedFilters.size(), filters.size());
 
         return unConsumedFilters;
     }
 
+    /**
+     * 设置投影字段。
+     *
+     * @param projectedFields 投影字段
+     */
     public void pushProjection(int[][] projectedFields) {
-        this.projectFields = projectedFields;
+        this.projectFields = projectedFields; // 设置投影字段
     }
 
+    /**
+     * 设置查询限制。
+     *
+     * @param limit 查询限制
+     */
     public void pushLimit(long limit) {
-        this.limit = limit;
+        this.limit = limit; // 设置查询限制
     }
 
+    /**
+     * 返回变更日志模式。
+     *
+     * @return 变更日志模式
+     */
     public abstract ChangelogMode getChangelogMode();
 
+    /**
+     * 获取扫描运行时提供程序。
+     *
+     * @param scanContext 扫描上下文
+     * @return 扫描运行时提供程序
+     */
     public abstract ScanRuntimeProvider getScanRuntimeProvider(ScanContext scanContext);
 
+    /**
+     * 应用水印策略。
+     *
+     * @param watermarkStrategy 水印策略
+     */
     public abstract void pushWatermark(WatermarkStrategy<RowData> watermarkStrategy);
 
+    /**
+     * 获取 Lookup 运行时提供程序。
+     *
+     * @param context Lookup 上下文
+     * @return Lookup 运行时提供程序
+     */
     public abstract LookupRuntimeProvider getLookupRuntimeProvider(LookupContext context);
 
+    /**
+     * 返回表的统计信息。
+     *
+     * @return 表的统计信息
+     */
     public abstract TableStats reportStatistics();
 
+    /**
+     * 返回当前数据源的副本。
+     *
+     * @return 当前数据源的副本
+     */
     public abstract FlinkTableSource copy();
 
+    /**
+     * 返回当前数据源的摘要字符串。
+     *
+     * @return 摘要字符串
+     */
     public abstract String asSummaryString();
 
+    /**
+     * 返回可以动态过滤的字段列表。
+     *
+     * @return 动态过滤字段列表
+     */
     public abstract List<String> listAcceptedFilterFields();
 
+    /**
+     * 应用动态过滤。
+     *
+     * @param candidateFilterFields 候选过滤字段
+     */
     public abstract void applyDynamicFiltering(List<String> candidateFilterFields);
 
+    /**
+     * 是否为流模式。
+     *
+     * @return 是否为流模式
+     */
     public abstract boolean isStreaming();
 
+    /**
+     * 推断数据源的并行度。
+     *
+     * @param env 执行环境
+     * @return 推断的并行度
+     */
     @Nullable
     protected Integer inferSourceParallelism(StreamExecutionEnvironment env) {
-        Options options = Options.fromMap(this.table.options());
+        Options options = Options.fromMap(this.table.options()); // 获取配置选项
         Configuration envConfig = (Configuration) env.getConfiguration();
         if (envConfig.containsKey(FLINK_INFER_SCAN_PARALLELISM)) {
             options.set(
@@ -158,43 +233,48 @@ public abstract class FlinkTableSource {
         Integer parallelism = options.get(FlinkConnectorOptions.SCAN_PARALLELISM);
         if (parallelism == null && options.get(FlinkConnectorOptions.INFER_SCAN_PARALLELISM)) {
             if (isStreaming()) {
-                parallelism = Math.max(1, options.get(CoreOptions.BUCKET));
+                parallelism = Math.max(1, options.get(CoreOptions.BUCKET)); // 流模式下使用桶数量作为并行度
             } else {
                 scanSplitsForInference();
                 parallelism = splitStatistics.splitNumber();
                 if (null != limit && limit > 0) {
                     int limitCount =
                             limit >= Integer.MAX_VALUE ? Integer.MAX_VALUE : limit.intValue();
-                    parallelism = Math.min(parallelism, limitCount);
+                    parallelism = Math.min(parallelism, limitCount); // 根据限制调整并行度
                 }
 
-                parallelism = Math.max(1, parallelism);
+                parallelism = Math.max(1, parallelism); // 保证并行度至少为1
                 parallelism =
                         Math.min(
                                 parallelism,
-                                options.get(FlinkConnectorOptions.INFER_SCAN_MAX_PARALLELISM));
+                                options.get(FlinkConnectorOptions.INFER_SCAN_MAX_PARALLELISM)); // 根据最大并行度限制调整并行度
             }
         }
         return parallelism;
     }
 
+    /**
+     * 扫描分片以推断统计信息。
+     */
     protected void scanSplitsForInference() {
         if (splitStatistics == null) {
             List<Split> splits =
                     table.newReadBuilder().withFilter(predicate).newScan().plan().splits();
-            splitStatistics = new SplitStatistics(splits);
+            splitStatistics = new SplitStatistics(splits); // 创建分片统计信息
         }
     }
 
-    /** Split statistics for inferring row count and parallelism size. */
+    /**
+     * 分片统计信息，用于推断行数和并行度。
+     */
     protected static class SplitStatistics {
 
-        private final int splitNumber;
-        private final long totalRowCount;
+        private final int splitNumber; // 分片数量
+        private final long totalRowCount; // 总行数
 
         protected SplitStatistics(List<Split> splits) {
-            this.splitNumber = splits.size();
-            this.totalRowCount = splits.stream().mapToLong(Split::rowCount).sum();
+            this.splitNumber = splits.size(); // 分片数量
+            this.totalRowCount = splits.stream().mapToLong(Split::rowCount).sum(); // 总行数
         }
 
         public int splitNumber() {

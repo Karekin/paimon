@@ -37,24 +37,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** Assigner to perform dynamic partition pruning by given {@link DynamicFilteringData}. */
+/**
+ * 通过给定的 {@link DynamicFilteringData} 执行动态分区裁剪的分配器。
+ * <p>该分配器用于在数据读取过程中动态过滤掉不需要的分区，以优化数据读取性能。</p>
+ */
 public class DynamicPartitionPruningAssigner implements SplitAssigner {
 
-    private final SplitAssigner innerAssigner;
-    private final Projection partitionRowProjection;
-    private final DynamicFilteringData dynamicFilteringData;
+    private final SplitAssigner innerAssigner; // 内部分片分配器
+    private final Projection partitionRowProjection; // 分区投影
+    private final DynamicFilteringData dynamicFilteringData; // 动态过滤数据
 
     public DynamicPartitionPruningAssigner(
             SplitAssigner innerAssigner,
             Projection partitionRowProjection,
             DynamicFilteringData dynamicFilteringData) {
-        this.innerAssigner = innerAssigner;
-        this.partitionRowProjection = partitionRowProjection;
-        this.dynamicFilteringData = dynamicFilteringData;
+        this.innerAssigner = innerAssigner; // 初始化内部分片分配器
+        this.partitionRowProjection = partitionRowProjection; // 初始化分区投影
+        this.dynamicFilteringData = dynamicFilteringData; // 初始化动态过滤数据
     }
 
     @Override
     public List<FileStoreSourceSplit> getNext(int subtask, @Nullable String hostname) {
+        // 从内部分片分配器中获取分片，并根据动态过滤数据进行过滤
         List<FileStoreSourceSplit> sourceSplits = innerAssigner.getNext(subtask, hostname);
         while (!sourceSplits.isEmpty()) {
             List<FileStoreSourceSplit> filtered =
@@ -70,6 +74,7 @@ public class DynamicPartitionPruningAssigner implements SplitAssigner {
 
     @Override
     public void addSplit(int suggestedTask, FileStoreSourceSplit splits) {
+        // 如果分片通过过滤条件，则将其添加到内部分片分配器中
         if (filter(splits)) {
             innerAssigner.addSplit(suggestedTask, splits);
         }
@@ -77,16 +82,28 @@ public class DynamicPartitionPruningAssigner implements SplitAssigner {
 
     @Override
     public void addSplitsBack(int subtask, List<FileStoreSourceSplit> splits) {
+        // 将分片添加回内部分片分配器
         innerAssigner.addSplitsBack(subtask, splits);
     }
 
     @Override
     public Collection<FileStoreSourceSplit> remainingSplits() {
+        // 获取剩余分片并进行过滤
         return innerAssigner.remainingSplits().stream()
                 .filter(this::filter)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 根据动态过滤数据创建动态分区裁剪分配器。
+     *
+     * @param subtaskId 子任务 ID
+     * @param oriAssigner 原始分片分配器
+     * @param partitionRowProjection 分区投影
+     * @param sourceEvent 源事件
+     * @param logger 日志记录器
+     * @return 动态分区裁剪分配器
+     */
     public static SplitAssigner createDynamicPartitionPruningAssignerIfNeeded(
             int subtaskId,
             SplitAssigner oriAssigner,
@@ -100,20 +117,28 @@ public class DynamicPartitionPruningAssigner implements SplitAssigner {
                 dynamicFilteringData.isFiltering());
         return dynamicFilteringData.isFiltering()
                 ? new DynamicPartitionPruningAssigner(
-                        oriAssigner, partitionRowProjection, dynamicFilteringData)
+                oriAssigner, partitionRowProjection, dynamicFilteringData)
                 : oriAssigner;
     }
 
     @Override
     public Optional<Long> getNextSnapshotId(int subtask) {
+        // 获取下一个快照 ID
         return innerAssigner.getNextSnapshotId(subtask);
     }
 
     @Override
     public int numberOfRemainingSplits() {
+        // 获取剩余分片数量
         return innerAssigner.numberOfRemainingSplits();
     }
 
+    /**
+     * 过滤分片，判断是否符合动态分区过滤条件。
+     *
+     * @param sourceSplit 分片
+     * @return 如果分片符合过滤条件，返回 true；否则返回 false
+     */
     private boolean filter(FileStoreSourceSplit sourceSplit) {
         DataSplit dataSplit = (DataSplit) sourceSplit.split();
         BinaryRow partition = dataSplit.partition();

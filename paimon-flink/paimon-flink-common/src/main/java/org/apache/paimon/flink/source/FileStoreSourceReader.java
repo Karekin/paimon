@@ -36,72 +36,92 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Optional;
 
-/** A {@link SourceReader} that read records from {@link FileStoreSourceSplit}. */
+/**
+ * 一个从 {@link FileStoreSourceSplit} 中读取记录的 {@link SourceReader}。
+ * <p>该 {@link SourceReader} 的具体实现，用于读取文件存储中的数据。</p>
+ */
 public class FileStoreSourceReader
         extends SingleThreadMultiplexSourceReaderBase<
-                RecordIterator<RowData>, RowData, FileStoreSourceSplit, FileStoreSourceSplitState> {
+        RecordIterator<RowData>, RowData, FileStoreSourceSplit, FileStoreSourceSplitState> {
 
-    private final IOManager ioManager;
+    private final IOManager ioManager; // 基础设施管理器，用于管理输入输出资源
 
-    private long lastConsumeSnapshotId = Long.MIN_VALUE;
+    private long lastConsumeSnapshotId = Long.MIN_VALUE; // 记录最近消费的快照ID
 
+    /**
+     * 构造函数，初始化文件存储源读取器。
+     * <p>主要用于初始化单线程模式下的源读取器。</p>
+     *
+     * @param readerContext 读取器上下文，包含读取器的配置和状态信息
+     * @param tableRead 表读取接口，用于从表中读取数据
+     * @param metrics 读取器的性能指标
+     * @param ioManager 基础设施管理器，用于管理IO资源
+     * @param limit 读取限制，可选参数
+     */
     public FileStoreSourceReader(
             SourceReaderContext readerContext,
             TableRead tableRead,
             FileStoreSourceReaderMetrics metrics,
             IOManager ioManager,
             @Nullable Long limit) {
-        // limiter is created in SourceReader, it can be shared in all split readers
+        // 初始化父类，设置单线程模式下的源读取器
         super(
-                () ->
-                        new FileStoreSourceSplitReader(
-                                tableRead, RecordLimiter.create(limit), metrics),
-                (element, output, state) ->
-                        FlinkRecordsWithSplitIds.emitRecord(
-                                readerContext, element, output, state, metrics),
+                () -> new FileStoreSourceSplitReader(tableRead, RecordLimiter.create(limit), metrics),
+                // 定义记录的输出方式
+                (element, output, state) -> FlinkRecordsWithSplitIds.emitRecord(
+                        readerContext, element, output, state, metrics),
                 readerContext.getConfiguration(),
                 readerContext);
-        this.ioManager = ioManager;
+        this.ioManager = ioManager; // 保存基础设施管理器
     }
 
+    /**
+     * 构造函数，初始化文件存储源读取器。
+     * <p>主要用于初始化线程安全的源读取器，适用于多线程或多任务环境。</p>
+     *
+     * @param readerContext 读取器上下文
+     * @param tableRead 表读取接口
+     * @param metrics 读取器的性能指标
+     * @param ioManager 基础设施管理器
+     * @param limit 读取限制
+     * @param elementsQueue 记录队列，用于存储读取的记录
+     */
     public FileStoreSourceReader(
             SourceReaderContext readerContext,
             TableRead tableRead,
             FileStoreSourceReaderMetrics metrics,
             IOManager ioManager,
             @Nullable Long limit,
-            FutureCompletingBlockingQueue<RecordsWithSplitIds<RecordIterator<RowData>>>
-                    elementsQueue) {
+            FutureCompletingBlockingQueue<RecordsWithSplitIds<RecordIterator<RowData>>> elementsQueue) {
+        // 初始化父类，设置线程安全的源读取器
         super(
                 elementsQueue,
-                () ->
-                        new FileStoreSourceSplitReader(
-                                tableRead, RecordLimiter.create(limit), metrics),
-                (element, output, state) ->
-                        FlinkRecordsWithSplitIds.emitRecord(
-                                readerContext, element, output, state, metrics),
+                () -> new FileStoreSourceSplitReader(tableRead, RecordLimiter.create(limit), metrics),
+                // 定义记录的输出方式
+                (element, output, state) -> FlinkRecordsWithSplitIds.emitRecord(
+                        readerContext, element, output, state, metrics),
                 readerContext.getConfiguration(),
                 readerContext);
-        this.ioManager = ioManager;
+        this.ioManager = ioManager; // 保存基础设施管理器
     }
 
     @Override
     public void start() {
-        // we request a split only if we did not get splits during the checkpoint restore
+        // 如果在检查点恢复过程中没有获取到分配的分片，则请求获取分片
         if (getNumberOfCurrentlyAssignedSplits() == 0) {
-            context.sendSplitRequest();
+            context.sendSplitRequest(); // 向协调器请求分配分片
         }
     }
 
     @Override
     protected void onSplitFinished(Map<String, FileStoreSourceSplitState> finishedSplitIds) {
-        // this method is called each time when we consume one split
-        // it is possible that one response from the coordinator contains multiple splits
-        // we should only require for more splits after we've consumed all given splits
+        // 每次消费一个分片时调用此方法
+        // 可能会一次性从协调器接收到多个分片，需要在处理完所有分片后请求更多分片
         if (getNumberOfCurrentlyAssignedSplits() == 0) {
-            context.sendSplitRequest();
+            context.sendSplitRequest(); // 向协调器请求更多分片
         }
 
+        // 计算已完成分片中的最大快照ID
         long maxFinishedSplits =
                 finishedSplitIds.values().stream()
                         .map(splitState -> TableScanUtils.getSnapshotId(splitState.toSourceSplit()))
@@ -110,27 +130,30 @@ public class FileStoreSourceReader
                         .max()
                         .orElse(Long.MIN_VALUE);
 
+        // 如果当前的快照ID小于最大快照ID，则更新并发送进度事件
         if (lastConsumeSnapshotId < maxFinishedSplits) {
             lastConsumeSnapshotId = maxFinishedSplits;
             context.sendSourceEventToCoordinator(
-                    new ReaderConsumeProgressEvent(lastConsumeSnapshotId));
+                    new ReaderConsumeProgressEvent(lastConsumeSnapshotId)); // 发送消费进度事件
         }
     }
 
     @Override
     protected FileStoreSourceSplitState initializedState(FileStoreSourceSplit split) {
+        // 初始化分片状态
         return new FileStoreSourceSplitState(split);
     }
 
     @Override
     protected FileStoreSourceSplit toSplitType(
             String splitId, FileStoreSourceSplitState splitState) {
+        // 将分片状态转换为分片类型
         return splitState.toSourceSplit();
     }
 
     @Override
     public void close() throws Exception {
-        super.close();
-        ioManager.close();
+        super.close(); // 调用父类的关闭方法
+        ioManager.close(); // 关闭基础设施管理器
     }
 }
