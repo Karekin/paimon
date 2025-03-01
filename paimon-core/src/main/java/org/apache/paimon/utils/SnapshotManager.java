@@ -53,152 +53,254 @@ import static org.apache.paimon.utils.BranchManager.DEFAULT_MAIN_BRANCH;
 import static org.apache.paimon.utils.BranchManager.branchPath;
 import static org.apache.paimon.utils.FileUtils.listVersionedFiles;
 
-/** Manager for {@link Snapshot}, providing utility methods related to paths and snapshot hints. */
+/**
+ * Snapshot 管理器，提供与路径和快照提示相关的实用方法。
+ */
 public class SnapshotManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LoggerFactory.getLogger(SnapshotManager.class);
 
+    // 快照路径前缀
     private static final String SNAPSHOT_PREFIX = "snapshot-";
+    // 增量日志路径前缀
     private static final String CHANGELOG_PREFIX = "changelog-";
+    // 特殊标识，表示最早的快照
     public static final String EARLIEST = "EARLIEST";
+    // 特殊标识，表示最新的快照
     public static final String LATEST = "LATEST";
+    // 读取提示文件的最大重试次数
     private static final int READ_HINT_RETRY_NUM = 3;
+    // 读取提示文件的重试间隔（单位：秒）
     private static final int READ_HINT_RETRY_INTERVAL = 1;
 
+    // 文件输入输出对象
     private final FileIO fileIO;
+    // 表的根路径
     private final Path tablePath;
+    // 分支名称
     private final String branch;
 
+    // 构造函数，初始化无分支的管理器
     public SnapshotManager(FileIO fileIO, Path tablePath) {
         this(fileIO, tablePath, DEFAULT_MAIN_BRANCH);
     }
 
-    /** Specify the default branch for data writing. */
+    /**
+     * 构造函数，指定默认分支。
+     * @param fileIO 文件输入输出对象
+     * @param tablePath 表的根路径
+     * @param branchName 分支名称，默认为主分支
+     */
     public SnapshotManager(FileIO fileIO, Path tablePath, String branchName) {
         this.fileIO = fileIO;
         this.tablePath = tablePath;
+        // 如果分支名称为空，则使用默认主分支
         this.branch = StringUtils.isBlank(branchName) ? DEFAULT_MAIN_BRANCH : branchName;
     }
 
+    /**
+     * 创建一个新实例，指定分支名称。
+     * @param branchName 分支名称
+     * @return 新的 SnapshotManager 实例
+     */
     public SnapshotManager copyWithBranch(String branchName) {
         return new SnapshotManager(fileIO, tablePath, branchName);
     }
 
+    // 获取文件输入输出对象
     public FileIO fileIO() {
         return fileIO;
     }
 
+    // 获取表的根路径
     public Path tablePath() {
         return tablePath;
     }
 
+    // 获取分支名称
     public String branch() {
         return branch;
     }
 
+    /**
+     * 获取指定分支的增量日志目录。
+     * @return 增量日志目录路径
+     */
     public Path changelogDirectory() {
         return new Path(branchPath(tablePath, branch) + "/changelog");
     }
 
+    /**
+     * 获取长期存在的增量日志路径。
+     * @param snapshotId 快照 ID
+     * @return 增量日志路径
+     */
     public Path longLivedChangelogPath(long snapshotId) {
         return new Path(
                 branchPath(tablePath, branch) + "/changelog/" + CHANGELOG_PREFIX + snapshotId);
     }
 
+    /**
+     * 获取快照路径。
+     * @param snapshotId 快照 ID
+     * @return 快照路径
+     */
     public Path snapshotPath(long snapshotId) {
         return new Path(
                 branchPath(tablePath, branch) + "/snapshot/" + SNAPSHOT_PREFIX + snapshotId);
     }
 
+    /**
+     * 获取快照目录路径。
+     * @return 快照目录路径
+     */
     public Path snapshotDirectory() {
         return new Path(branchPath(tablePath, branch) + "/snapshot");
     }
 
+    /**
+     * 根据快照 ID 获取快照对象。
+     * @param snapshotId 快照 ID
+     * @return 快照对象
+     */
     public Snapshot snapshot(long snapshotId) {
         Path snapshotPath = snapshotPath(snapshotId);
         return Snapshot.fromPath(fileIO, snapshotPath);
     }
 
+    /**
+     * 根据快照 ID 获取增量日志对象。
+     * @param snapshotId 快照 ID
+     * @return 增量日志对象
+     */
     public Changelog changelog(long snapshotId) {
         Path changelogPath = longLivedChangelogPath(snapshotId);
         return Changelog.fromPath(fileIO, changelogPath);
     }
 
+    /**
+     * 根据快照 ID 获取长期存在的增量日志对象。
+     * @param snapshotId 快照 ID
+     * @return 长期存在的增量日志对象
+     */
     public Changelog longLivedChangelog(long snapshotId) {
         return Changelog.fromPath(fileIO, longLivedChangelogPath(snapshotId));
     }
 
+    /**
+     * 检查指定快照是否存在于快照目录中。
+     * @param snapshotId 快照 ID
+     * @return 是否存在
+     */
     public boolean snapshotExists(long snapshotId) {
         Path path = snapshotPath(snapshotId);
         try {
             return fileIO.exists(path);
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Failed to determine if snapshot #" + snapshotId + " exists in path " + path,
+                    "无法确定快照 #" + snapshotId + " 是否存在于路径 " + path,
                     e);
         }
     }
 
+    /**
+     * 检查指定快照的长期存在的增量日志是否存在于增量日志目录中。
+     * @param snapshotId 快照 ID
+     * @return 是否存在
+     */
     public boolean longLivedChangelogExists(long snapshotId) {
         Path path = longLivedChangelogPath(snapshotId);
         try {
             return fileIO.exists(path);
         } catch (IOException e) {
             throw new RuntimeException(
-                    "Failed to determine if changelog #" + snapshotId + " exists in path " + path,
+                    "无法确定增量日志 #" + snapshotId + " 是否存在于路径 " + path,
                     e);
         }
     }
 
+    /**
+     * 获取最新的快照对象。
+     * @return 最新的快照对象，如果不存在则返回 null
+     */
     public @Nullable Snapshot latestSnapshot() {
         Long snapshotId = latestSnapshotId();
         return snapshotId == null ? null : snapshot(snapshotId);
     }
 
+    /**
+     * 获取最新的快照 ID。
+     * @return 最新的快照 ID，如果不存在则返回 null
+     */
     public @Nullable Long latestSnapshotId() {
         try {
             return findLatest(snapshotDirectory(), SNAPSHOT_PREFIX, this::snapshotPath);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find latest snapshot id", e);
+            throw new RuntimeException("无法找到最新的快照 ID", e);
         }
     }
 
+    /**
+     * 获取最早的快照对象。
+     * @return 最早的快照对象，如果不存在则返回 null
+     */
     public @Nullable Snapshot earliestSnapshot() {
         Long snapshotId = earliestSnapshotId();
         return snapshotId == null ? null : snapshot(snapshotId);
     }
 
+    /**
+     * 获取最早的快照 ID。
+     * @return 最早的快照 ID，如果不存在则返回 null
+     */
     public @Nullable Long earliestSnapshotId() {
         try {
             return findEarliest(snapshotDirectory(), SNAPSHOT_PREFIX, this::snapshotPath);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find earliest snapshot id", e);
+            throw new RuntimeException("无法找到最早的快照 ID", e);
         }
     }
 
+    /**
+     * 获取最早的长期存在的增量日志 ID。
+     * @return 最早的增量日志 ID，如果不存在则返回 null
+     */
     public @Nullable Long earliestLongLivedChangelogId() {
         try {
             return findEarliest(
                     changelogDirectory(), CHANGELOG_PREFIX, this::longLivedChangelogPath);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find earliest changelog id", e);
+            throw new RuntimeException("无法找到最早的增量日志 ID", e);
         }
     }
 
+    /**
+     * 获取最新的长期存在的增量日志 ID。
+     * @return 最新的增量日志 ID，如果不存在则返回 null
+     */
     public @Nullable Long latestLongLivedChangelogId() {
         try {
             return findLatest(changelogDirectory(), CHANGELOG_PREFIX, this::longLivedChangelogPath);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to find latest changelog id", e);
+            throw new RuntimeException("无法找到最新的增量日志 ID", e);
         }
     }
 
+    /**
+     * 获取最新的增量日志 ID，该 ID 与最新的快照 ID 相同。
+     * @return 最新的增量日志 ID，如果不存在则返回 null
+     */
     public @Nullable Long latestChangelogId() {
         return latestSnapshotId();
     }
 
+    /**
+     * 根据指定条件选择快照的 ID，如果符合条件的快照不存在则返回最新的快照 ID。
+     * @param predicate 选择条件
+     * @return 符合条件的快照 ID 或最新的快照 ID
+     */
     public @Nullable Long pickOrLatest(Predicate<Snapshot> predicate) {
         Long latestId = latestSnapshotId();
         Long earliestId = earliestSnapshotId();
@@ -218,6 +320,12 @@ public class SnapshotManager implements Serializable {
         return latestId;
     }
 
+    /**
+     * 根据时间戳，查找最早的不小于指定时间的快照 ID。
+     * @param timestampMills 时间戳
+     * @param startFromChangelog 是否从增量日志开始查找
+     * @return 符合条件的快照 ID 或 null
+     */
     private Snapshot changelogOrSnapshot(long snapshotId) {
         if (longLivedChangelogExists(snapshotId)) {
             return changelog(snapshotId);
@@ -259,9 +367,12 @@ public class SnapshotManager implements Serializable {
         return earliest;
     }
 
+
     /**
-     * Returns a {@link Snapshot} whoes commit time is earlier than or equal to given timestamp
-     * mills. If there is no such a snapshot, returns null.
+     * 返回一个快照，该快照的提交时间早于或等于给定的时间毫秒。
+     * 如果没有这样的快照，则返回 null。
+     * @param timestampMills 时间戳（毫秒）
+     * @return 符合条件的快照
      */
     public @Nullable Snapshot earlierOrEqualTimeMills(long timestampMills) {
         Long earliest = earliestSnapshotId();
@@ -276,16 +387,16 @@ public class SnapshotManager implements Serializable {
         }
         Snapshot finalSnapshot = null;
         while (earliest <= latest) {
-            long mid = earliest + (latest - earliest) / 2; // Avoid overflow
+            long mid = earliest + (latest - earliest) / 2; // 避免溢出
             Snapshot snapshot = snapshot(mid);
             long commitTime = snapshot.timeMillis();
             if (commitTime > timestampMills) {
-                latest = mid - 1; // Search in the left half
+                latest = mid - 1; // 搜索左半部分
             } else if (commitTime < timestampMills) {
-                earliest = mid + 1; // Search in the right half
+                earliest = mid + 1; // 搜索右半部分
                 finalSnapshot = snapshot;
             } else {
-                finalSnapshot = snapshot; // Found the exact match
+                finalSnapshot = snapshot; // 找到完全匹配
                 break;
             }
         }
@@ -293,8 +404,10 @@ public class SnapshotManager implements Serializable {
     }
 
     /**
-     * Returns a {@link Snapshot} whoes commit time is later than or equal to given timestamp mills.
-     * If there is no such a snapshot, returns null.
+     * 返回一个快照，该快照的提交时间不早于给定的时间毫秒。
+     * 如果没有这样的快照，则返回 null。
+     * @param timestampMills 时间戳（毫秒）
+     * @return 符合条件的快照
      */
     public @Nullable Snapshot laterOrEqualTimeMills(long timestampMills) {
         Long earliest = earliestSnapshotId();
@@ -309,32 +422,35 @@ public class SnapshotManager implements Serializable {
         }
         Snapshot finalSnapshot = null;
         while (earliest <= latest) {
-            long mid = earliest + (latest - earliest) / 2; // Avoid overflow
+            long mid = earliest + (latest - earliest) / 2; // 避免溢出
             Snapshot snapshot = snapshot(mid);
             long commitTime = snapshot.timeMillis();
             if (commitTime > timestampMills) {
-                latest = mid - 1; // Search in the left half
+                latest = mid - 1; // 搜索左半部分
                 finalSnapshot = snapshot;
             } else if (commitTime < timestampMills) {
-                earliest = mid + 1; // Search in the right half
+                earliest = mid + 1; // 搜索右半部分
             } else {
-                finalSnapshot = snapshot; // Found the exact match
+                finalSnapshot = snapshot; // 找到完全匹配
                 break;
             }
         }
         return finalSnapshot;
     }
 
+    /**
+     * 根据水印查找快照。
+     * 如果找不到符合条件的快照，则返回 null。
+     * @param watermark 水印
+     * @return 符合条件的快照
+     */
     public @Nullable Snapshot laterOrEqualWatermark(long watermark) {
         Long earliest = earliestSnapshotId();
         Long latest = latestSnapshotId();
-        // If latest == Long.MIN_VALUE don't need next binary search for watermark
-        // which can reduce IO cost with snapshot
         if (earliest == null || latest == null || snapshot(latest).watermark() == Long.MIN_VALUE) {
             return null;
         }
         Long earliestWatermark = null;
-        // find the first snapshot with watermark
         if ((earliestWatermark = snapshot(earliest).watermark()) == null) {
             while (earliest < latest) {
                 earliest++;
@@ -354,11 +470,11 @@ public class SnapshotManager implements Serializable {
         Snapshot finalSnapshot = null;
 
         while (earliest <= latest) {
-            long mid = earliest + (latest - earliest) / 2; // Avoid overflow
+            long mid = earliest + (latest - earliest) / 2; // 避免溢出
             Snapshot snapshot = snapshot(mid);
             Long commitWatermark = snapshot.watermark();
             if (commitWatermark == null) {
-                // find the first snapshot with watermark
+                // 查找第一个带水印的快照
                 while (mid >= earliest) {
                     mid--;
                     commitWatermark = snapshot(mid).watermark();
@@ -371,12 +487,12 @@ public class SnapshotManager implements Serializable {
                 earliest = mid + 1;
             } else {
                 if (commitWatermark > watermark) {
-                    latest = mid - 1; // Search in the left half
+                    latest = mid - 1; // 搜索左半部分
                     finalSnapshot = snapshot;
                 } else if (commitWatermark < watermark) {
-                    earliest = mid + 1; // Search in the right half
+                    earliest = mid + 1; // 搜索右半部分
                 } else {
-                    finalSnapshot = snapshot; // Found the exact match
+                    finalSnapshot = snapshot; // 找到完全匹配
                     break;
                 }
             }
@@ -401,7 +517,6 @@ public class SnapshotManager implements Serializable {
         Long lowerBoundSnapshotId = earliestSnapshotId();
         Long upperBoundSnapshotId = latestSnapshotId();
 
-        // null check on lowerBoundSnapshotId & upperBoundSnapshotId
         if (lowerBoundSnapshotId == null || upperBoundSnapshotId == null) {
             return Collections.emptyIterator();
         }
@@ -414,7 +529,6 @@ public class SnapshotManager implements Serializable {
             lowerBoundSnapshotId = optionalMinSnapshotId.get();
         }
 
-        // +1 here to include the upperBoundSnapshotId
         return LongStream.range(lowerBoundSnapshotId, upperBoundSnapshotId + 1)
                 .mapToObj(this::snapshot)
                 .sorted(Comparator.comparingLong(Snapshot::id))
@@ -429,8 +543,9 @@ public class SnapshotManager implements Serializable {
     }
 
     /**
-     * If {@link FileNotFoundException} is thrown when reading the snapshot file, this snapshot may
-     * be deleted by other processes, so just skip this snapshot.
+     * 如果在读取快照文件时发生文件未找到的异常，则跳过此快照。
+     * @return 所有可用的快照
+     * @throws IOException 如果发生其他 I/O 错误
      */
     public List<Snapshot> safelyGetAllSnapshots() throws IOException {
         List<Path> paths =
@@ -468,8 +583,9 @@ public class SnapshotManager implements Serializable {
     }
 
     /**
-     * Try to get non snapshot files. If any error occurred, just ignore it and return an empty
-     * result.
+     * 尝试获取非快照文件，如果出现错误则返回一个空列表。
+     * @param fileStatusFilter 文件状态过滤器
+     * @return 非快照文件路径列表
      */
     public List<Path> tryGetNonSnapshotFiles(Predicate<FileStatus> fileStatusFilter) {
         return listPathWithFilter(snapshotDirectory(), fileStatusFilter, nonSnapshotFileFilter());
@@ -526,6 +642,7 @@ public class SnapshotManager implements Serializable {
                         earliestSnapshotId(),
                         "Latest snapshot id is not null, but earliest snapshot id is null. "
                                 + "This is unexpected.");
+
         for (long id = latestId; id >= earliestId; id--) {
             Snapshot snapshot;
             try {
@@ -537,18 +654,12 @@ public class SnapshotManager implements Serializable {
                                 "Latest snapshot id is not null, but earliest snapshot id is null. "
                                         + "This is unexpected.");
 
-                // this is a valid snapshot, should throw exception
                 if (id >= newEarliestId) {
                     throw e;
                 }
 
-                // this is an expired snapshot
                 LOG.warn(
-                        "Snapshot #"
-                                + id
-                                + " is expired. The latest snapshot of current user("
-                                + user
-                                + ") is not found.");
+                        "Snapshot #" + id + " is expired. The latest snapshot of user(" + user + ") is not found.");
                 break;
             }
 
@@ -559,7 +670,12 @@ public class SnapshotManager implements Serializable {
         return Optional.empty();
     }
 
-    /** Find the snapshot of the specified identifiers written by the specified user. */
+    /**
+     * 根据用户和标识符查找快照列表。
+     * @param user 用户
+     * @param identifiers 标识符列表
+     * @return 符合条件的快照列表
+     */
     public List<Snapshot> findSnapshotsForIdentifiers(
             @Nonnull String user, List<Long> identifiers) {
         if (identifiers.isEmpty()) {
@@ -572,8 +688,7 @@ public class SnapshotManager implements Serializable {
         long earliestId =
                 Preconditions.checkNotNull(
                         earliestSnapshotId(),
-                        "Latest snapshot id is not null, but earliest snapshot id is null. "
-                                + "This is unexpected.");
+                        "Latest snapshot id is not null, but earliest snapshot id is null. This is unexpected.");
 
         long minSearchedIdentifier = identifiers.stream().min(Long::compareTo).get();
         List<Snapshot> matchedSnapshots = new ArrayList<>();
@@ -597,9 +712,9 @@ public class SnapshotManager implements Serializable {
     }
 
     /**
-     * Traversal snapshots from latest to earliest safely, this is applied on the writer side
-     * because the committer may delete obsolete snapshots, which may cause the writer to encounter
-     * unreadable snapshots.
+     * 安全地从最新快照开始遍历，适用于快照可能被删除的场景。
+     * @param checker 快照检查器
+     * @return 符合条件的快照
      */
     @Nullable
     public Snapshot traversalSnapshotsFromLatestSafely(Filter<Snapshot> checker) {
@@ -690,8 +805,11 @@ public class SnapshotManager implements Serializable {
     }
 
     /**
-     * Find the overlapping snapshots between sortedSnapshots and range of [beginInclusive,
-     * endExclusive).
+     * 根据开始和结束 ID 查找重叠的快照。
+     * @param sortedSnapshots 排序后的快照列表
+     * @param beginInclusive 开始 ID（包含）
+     * @param endExclusive 结束 ID（不包含）
+     * @return 重叠的快照列表
      */
     public static List<Snapshot> findOverlappedSnapshots(
             List<Snapshot> sortedSnapshots, long beginInclusive, long endExclusive) {

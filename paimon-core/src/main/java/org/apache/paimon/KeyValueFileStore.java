@@ -58,23 +58,28 @@ import static org.apache.paimon.predicate.PredicateBuilder.pickTransformFieldMap
 import static org.apache.paimon.predicate.PredicateBuilder.splitAnd;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 
-/** {@link FileStore} for querying and updating {@link KeyValue}s. */
 /**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* KeyValueFileStore 用来查询、更新FileStore文件存储
-*/
+ * {@link FileStore} for querying and updating {@link KeyValue}s.
+ * 利用 FileStore 实现存储、查询、更新键值对
+ */
 public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
-
+    //是否跨分区更新
     private final boolean crossPartitionUpdate;
+    //桶键的类型
     private final RowType bucketKeyType;
+    //键的类型
     private final RowType keyType;
+    //值的类型
     private final RowType valueType;
+    //键值对字段提取器
     private final KeyValueFieldsExtractor keyValueFieldsExtractor;
+    //键比较器供应器
     private final Supplier<Comparator<InternalRow>> keyComparatorSupplier;
+    //值等价器供应器
     private final Supplier<RecordEqualiser> valueEqualiserSupplier;
+    //合并函数工厂
     private final MergeFunctionFactory<KeyValue> mfFactory;
+    //当前表名
     private final String tableName;
 
     public KeyValueFileStore(
@@ -105,6 +110,7 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
 
     @Override
     public BucketMode bucketMode() {
+        //如果选项中的桶数为 -1，则分桶模式由跨分区更新决定，否则为固定哈希分桶
         if (options.bucket() == -1) {
             return crossPartitionUpdate ? BucketMode.CROSS_PARTITION : BucketMode.HASH_DYNAMIC;
         } else {
@@ -115,11 +121,13 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
 
     @Override
     public KeyValueFileStoreScan newScan() {
+        //创建一个新的扫描器
         return newScan(false);
     }
 
     @Override
     public MergeFileSplitRead newRead() {
+        //创建一个新的读取器
         return new MergeFileSplitRead(
                 options,
                 schema,
@@ -131,6 +139,7 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
     }
 
     public RawFileSplitRead newBatchRawFileRead() {
+        //创建一个新的批量原始文件读取器
         return new RawFileSplitRead(
                 fileIO,
                 schemaManager,
@@ -142,6 +151,7 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
     }
 
     public KeyValueFileReaderFactory.Builder newReaderFactoryBuilder() {
+        //创建一个新的文件读取器工厂构建器
         return KeyValueFileReaderFactory.builder(
                 fileIO,
                 schemaManager,
@@ -156,61 +166,59 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
 
     @Override
     public KeyValueFileStoreWrite newWrite(String commitUser) {
+        //创建一个新的写入器
         return newWrite(commitUser, null);
     }
 
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 创建一个新的键值文件存储写入器（KeyValueFileStoreWrite）。
-    *  根据当前的配置和分桶模式，构建一个用于写入键值对到文件存储的写入器实例。
-    */
+     * 创建一个新的键值文件存储写入器（KeyValueFileStoreWrite）。
+     * 根据当前的配置和分桶模式，构建一个用于写入键值对到文件存储的写入器实例。
+     */
     @Override
     public KeyValueFileStoreWrite newWrite(String commitUser, ManifestCacheFilter manifestFilter) {
-        // 索引维护器的工厂类，初始化为null，根据分桶模式可能会被赋值
+        // 初始化索引维护器工厂
         IndexMaintainer.Factory<KeyValue> indexFactory = null;
-        // 如果当前分桶模式是动态哈希分桶
         if (bucketMode() == BucketMode.HASH_DYNAMIC) {
-            // 则创建一个哈希索引维护器的工厂类，并传入新的索引文件处理器
+            // 如果分桶模式是动态哈希分桶，则创建哈希索引维护器工厂
             indexFactory = new HashIndexMaintainer.Factory(newIndexFileHandler());
         }
-        // 删除向量维护器的工厂类，初始化为null，
+        // 初始化删除向量维护器工厂
         DeletionVectorsMaintainer.Factory deletionVectorsMaintainerFactory = null;
-        // 如果启用了删除向量
         if (options.deletionVectorsEnabled()) {
-            // 则创建一个删除向量维护器的工厂类，并传入新的索引文件处理器
-            deletionVectorsMaintainerFactory =
-                    new DeletionVectorsMaintainer.Factory(newIndexFileHandler());
+            // 如果启用了删除向量，则创建删除向量维护器工厂
+            deletionVectorsMaintainerFactory = new DeletionVectorsMaintainer.Factory(newIndexFileHandler());
         }
-        // 返回一个新的键值文件存储写入器实例
+        // 返回一个新的写入器实例
         return new KeyValueFileStoreWrite(
-                fileIO,// 文件IO接口，用于读写文件
-                schemaManager,// 模式管理器，用于管理数据库或表的模式
-                schema,// 当前的模式信息
-                commitUser,// 提交操作的用户
-                partitionType,// 分区类型
-                keyType,// 键的类型
-                valueType,// 值的类型
-                keyComparatorSupplier, // 键的比较器供应器，用于比较键
-                () -> UserDefinedSeqComparator.create(valueType, options),// 值序列的比较器创建函数，用于比较值序列
-                valueEqualiserSupplier,// 值的等价器供应器，用于判断值是否等价
-                mfFactory,// Manifest文件的工厂类，用于创建Manifest文件
-                pathFactory(),// 路径工厂类，用于生成文件路径
-                format2PathFactory(),// 格式到路径的工厂类，用于根据格式生成路径
-                snapshotManager(),// 快照管理器，用于管理快照
-                newScan(true).withManifestCacheFilter(manifestFilter),// 创建一个新的扫描器，并应用manifest过滤器
-                indexFactory,// 索引维护器的工厂类（可能为null）
-                deletionVectorsMaintainerFactory,// 删除向量维护器的工厂类（可能为null）
-                options,// 配置选项
-                keyValueFieldsExtractor,// 键值字段提取器，用于从数据中提取键值对
+                fileIO, // 文件 IO 接口
+                schemaManager, // 模式管理器
+                schema, // 当前的表模式
+                commitUser, // 提交用户
+                partitionType, // 分区类型
+                keyType, // 键的类型
+                valueType, // 值的类型
+                keyComparatorSupplier, // 键比较器供应器
+                () -> UserDefinedSeqComparator.create(valueType, options), // 值比较器
+                valueEqualiserSupplier, // 值等价器供应器
+                mfFactory, // 合并函数工厂
+                pathFactory(), // 路径工厂
+                format2PathFactory(), // 格式到路径工厂的映射
+                snapshotManager(), // 快照管理器
+                newScan(true).withManifestCacheFilter(manifestFilter), // 创建带有过滤器的扫描器
+                indexFactory, // 索引维护器工厂
+                deletionVectorsMaintainerFactory, // 删除向量维护器工厂
+                options, // 配置选项
+                keyValueFieldsExtractor, // 键值字段提取器
                 tableName); // 表名
     }
 
+    // 创建格式到路径工厂的映射
     private Map<String, FileStorePathFactory> format2PathFactory() {
         Map<String, FileStorePathFactory> pathFactoryMap = new HashMap<>();
+        // 获取所有文件格式
         Set<String> formats = new HashSet<>(options.fileFormatPerLevel().values());
         formats.add(options.fileFormat().getFormatIdentifier());
+        // 遍历所有格式并创建对应的路径工厂
         formats.forEach(
                 format ->
                         pathFactoryMap.put(
@@ -223,25 +231,26 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
         return pathFactoryMap;
     }
 
+    // 创建一个新的扫描器
     private KeyValueFileStoreScan newScan(boolean forWrite) {
-        ScanBucketFilter bucketFilter =
-                new ScanBucketFilter(bucketKeyType) {
-                    @Override
-                    public void pushdown(Predicate keyFilter) {
-                        if (bucketMode() != BucketMode.HASH_FIXED) {
-                            return;
-                        }
-
-                        List<Predicate> bucketFilters =
-                                pickTransformFieldMapping(
-                                        splitAnd(keyFilter),
-                                        keyType.getFieldNames(),
-                                        bucketKeyType.getFieldNames());
-                        if (bucketFilters.size() > 0) {
-                            setBucketKeyFilter(and(bucketFilters));
-                        }
-                    }
-                };
+        // 创建一个桶筛选过滤器
+        ScanBucketFilter bucketFilter = new ScanBucketFilter(bucketKeyType) {
+            @Override
+            public void pushdown(Predicate keyFilter) {
+                if (bucketMode() != BucketMode.HASH_FIXED) {
+                    return;
+                }
+                // 提取键过滤器
+                List<Predicate> bucketFilters = pickTransformFieldMapping(
+                        splitAnd(keyFilter),
+                        keyType.getFieldNames(),
+                        bucketKeyType.getFieldNames());
+                if (!bucketFilters.isEmpty()) {
+                    setBucketKeyFilter(and(bucketFilters));
+                }
+            }
+        };
+        // 返回新的扫描器实例
         return new KeyValueFileStoreScan(
                 partitionType,
                 bucketFilter,
@@ -261,6 +270,7 @@ public class KeyValueFileStore extends AbstractFileStore<KeyValue> {
 
     @Override
     public Comparator<InternalRow> newKeyComparator() {
+        // 返回键比较器
         return keyComparatorSupplier.get();
     }
 }

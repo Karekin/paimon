@@ -6,6 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="b4c4ac99-5cad-42e3-9468-db772ba6a63f" name="Changes" comment="doc: 学习paimon源码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/CoreOptions.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/CoreOptions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/KeyValueFileStore.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/KeyValueFileStore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeFunctionFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeFunctionFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreScan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/KeyValueFileStoreScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/KeyValueFileStoreScan.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/stats/SimpleStatsConverters.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/stats/SimpleStatsConverters.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/SnapshotManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/SnapshotManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-e2e-tests/target/classes/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-e2e-tests/target/classes/docker-compose.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -261,6 +270,8 @@
       <workItem from="1740657134909" duration="632000" />
       <workItem from="1740701749532" duration="1348000" />
       <workItem from="1740718044749" duration="2161000" />
+      <workItem from="1740742369098" duration="18866000" />
+      <workItem from="1740790944394" duration="4024000" />
     </task>
     <task id="LOCAL-00001" summary="20241121初始化">
       <option name="closed" value="true" />
@@ -315,7 +326,21 @@
       <option name="project" value="LOCAL" />
       <updated>1740720178625</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="doc: 学习paimon源码">
+      <created>1740756213468</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1740756213468</updated>
+    </task>
+    <task id="LOCAL-00009" summary="doc: 学习paimon源码">
+      <created>1740763444671</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1740763444671</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -402,49 +427,14 @@
           <option name="timeStamp" value="207" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/ConsumerProgressCalculator.java</url>
-          <line>59</line>
-          <option name="timeStamp" value="257" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/snapshot/InputChangelogFollowUpScanner.java</url>
           <line>47</line>
           <option name="timeStamp" value="262" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/MonitorFunction.java</url>
-          <line>178</line>
-          <option name="timeStamp" value="264" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/MonitorFunction.java</url>
-          <line>101</line>
-          <option name="timeStamp" value="265" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/ReadOperator.java</url>
-          <line>98</line>
-          <option name="timeStamp" value="266" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/MonitorFunction.java</url>
-          <line>108</line>
-          <option name="timeStamp" value="267" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/MonitorFunction.java</url>
-          <line>210</line>
-          <option name="timeStamp" value="268" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/../../paimon_source/flink-1.19.1-src/flink-1.19.1/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/functions/source/ContinuousFileReaderOperator.java</url>
           <line>329</line>
           <option name="timeStamp" value="269" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/operator/ReadOperator.java</url>
-          <line>64</line>
-          <option name="timeStamp" value="271" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>jar://$PROJECT_DIR$/../../dir/repository/org/apache/flink/flink-table-planner_2.12/1.19.1/flink-table-planner_2.12-1.19.1-sources.jar!/org/apache/flink/table/planner/operations/SqlNodeToOperationConversion.java</url>
@@ -453,12 +443,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
-          <line>128</line>
+          <line>132</line>
           <option name="timeStamp" value="324" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/SingleFileWriter.java</url>
-          <line>98</line>
+          <line>137</line>
           <option name="timeStamp" value="330" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -473,7 +463,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/StatsCollectingSingleFileWriter.java</url>
-          <line>77</line>
+          <line>86</line>
           <option name="timeStamp" value="343" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -498,7 +488,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>979</line>
+          <line>1098</line>
           <option name="timeStamp" value="485" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -515,16 +505,6 @@
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/snapshot/FollowUpScanner.java</url>
           <line>32</line>
           <option name="timeStamp" value="523" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/align/AlignedContinuousFileStoreSource.java</url>
-          <line>60</line>
-          <option name="timeStamp" value="530" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/FileStoreSourceReader.java</url>
-          <line>90</line>
-          <option name="timeStamp" value="531" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>jar://$PROJECT_DIR$/../../dir/repository/org/apache/flink/flink-runtime/1.19.1/flink-runtime-1.19.1.jar!/org/apache/flink/runtime/source/coordinator/SourceCoordinator.class</url>
@@ -553,22 +533,22 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>253</line>
+          <line>335</line>
           <option name="timeStamp" value="654" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>807</line>
+          <line>921</line>
           <option name="timeStamp" value="656" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>881</line>
+          <line>1004</line>
           <option name="timeStamp" value="657" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>874</line>
+          <line>997</line>
           <option name="timeStamp" value="658" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -588,12 +568,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>917</line>
+          <line>1037</line>
           <option name="timeStamp" value="683" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
-          <line>845</line>
+          <line>963</line>
           <option name="timeStamp" value="684" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -605,11 +585,6 @@
           <url>file://$PROJECT_DIR$/../../paimon_source/flink-1.19.1-src/flink-1.19.1/flink-streaming-java/src/main/java/org/apache/flink/streaming/api/operators/SourceOperator.java</url>
           <line>354</line>
           <option name="timeStamp" value="739" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/FlinkRecordsWithSplitIds.java</url>
-          <line>112</line>
-          <option name="timeStamp" value="740" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/../../paimon_source/flink-1.19.1-src/flink-1.19.1/flink-runtime/src/main/java/org/apache/flink/runtime/source/coordinator/SourceCoordinator.java</url>
@@ -632,23 +607,13 @@
           <option name="timeStamp" value="749" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/ContinuousFileSplitEnumerator.java</url>
-          <line>95</line>
-          <option name="timeStamp" value="761" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/ContinuousFileSplitEnumerator.java</url>
-          <line>126</line>
-          <option name="timeStamp" value="762" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/snapshot/SnapshotReaderImpl.java</url>
           <line>258</line>
           <option name="timeStamp" value="765" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreScan.java</url>
-          <line>274</line>
+          <line>449</line>
           <option name="timeStamp" value="766" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -683,12 +648,12 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkStreamPartitioner.java</url>
-          <line>71</line>
+          <line>123</line>
           <option name="timeStamp" value="789" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
-          <line>226</line>
+          <line>238</line>
           <option name="timeStamp" value="790" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
