@@ -40,17 +40,23 @@ import java.util.concurrent.TimeUnit;
 /**
  * An abstract Operator to execute {@link UnawareAppendCompactionTask} passed from {@link
  * BucketUnawareCompactSource} for compacting table. This operator is always in async mode.
+ *
+ * 这是一个抽象的操作符，用于执行从 {@link BucketUnawareCompactSource} 传递的 {@link UnawareAppendCompactionTask}，以压缩表。该操作符总是处于异步模式。
  */
 public abstract class AppendCompactWorkerOperator<IN>
         extends PrepareCommitOperator<IN, Committable> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppendCompactWorkerOperator.class);
 
+    // 文件存储表的引用
     private final FileStoreTable table;
+    // 提交用户的标识
     private final String commitUser;
 
+    // 无感知桶压缩器
     protected transient UnawareBucketCompactor unawareBucketCompactor;
 
+    // 延迟压缩执行器
     private transient ExecutorService lazyCompactExecutor;
 
     public AppendCompactWorkerOperator(FileStoreTable table, String commitUser) {
@@ -59,26 +65,32 @@ public abstract class AppendCompactWorkerOperator<IN>
         this.commitUser = commitUser;
     }
 
+    // 用于测试的返回压缩结果的方法
     @VisibleForTesting
     Iterable<Future<CommitMessage>> result() {
         return unawareBucketCompactor.result();
     }
 
+    // 初始化操作符
     @Override
     public void open() throws Exception {
         LOG.debug("Opened a append-only table compaction worker.");
+        // 初始化无感知桶压缩器
         this.unawareBucketCompactor =
                 new UnawareBucketCompactor(table, commitUser, this::workerExecutor);
     }
 
+    // 准备提交的压缩任务
     @Override
     protected List<Committable> prepareCommit(boolean waitCompaction, long checkpointId)
             throws IOException {
         return this.unawareBucketCompactor.prepareCommit(waitCompaction, checkpointId);
     }
 
+    // 获取工作线程执行器
     private ExecutorService workerExecutor() {
         if (lazyCompactExecutor == null) {
+            // 创建一个新的单线程调度执行器
             lazyCompactExecutor =
                     Executors.newSingleThreadScheduledExecutor(
                             new ExecutorThreadFactory(
@@ -88,14 +100,16 @@ public abstract class AppendCompactWorkerOperator<IN>
         return lazyCompactExecutor;
     }
 
+    // 关闭操作符
     @Override
     public void close() throws Exception {
         if (lazyCompactExecutor != null) {
-            // ignore runnable tasks in queue
+            // 立即关闭执行器，并忽略队列中的任务
             lazyCompactExecutor.shutdownNow();
             if (!lazyCompactExecutor.awaitTermination(120, TimeUnit.SECONDS)) {
                 LOG.warn(
                         "Executors shutdown timeout, there may be some files aren't deleted correctly");
+                // 在关闭执行器时，如果有文件未正确删除，会发出警告
             }
             this.unawareBucketCompactor.close();
         }

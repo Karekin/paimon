@@ -24,27 +24,48 @@ import org.apache.paimon.mergetree.LevelSortedRun;
 import java.util.List;
 import java.util.Optional;
 
-/** Compact strategy to decide which files to select for compaction. */
+/**
+ * 压缩策略接口，用于决定哪些文件需要被选中进行压缩（compaction）。
+ * 提供方法从运行（runs）中挑选压缩单元。
+ */
 public interface CompactStrategy {
 
     /**
-     * Pick compaction unit from runs.
+     * 从运行（runs）中挑选压缩单元（CompactUnit）。
      *
      * <ul>
-     *   <li>compaction is runs-based, not file-based.
-     *   <li>level 0 is special, one run per file; all other levels are one run per level.
-     *   <li>compaction is sequential from small level to large level.
+     *   <li>压缩基于运行（runs），而不是基于文件。
+     *   <li>level 0 特殊处理，每个文件对应一个运行；其他级别每个级别对应一个运行。
+     *   <li>压缩从较小的级别向较大的级别依次进行。
      * </ul>
+     *
+     * 参数:
+     * - numLevels：运行的总级别数。通常一个文件系统有多个级别，用于分层存储数据。
+     * - runs：按级别排序的运行列表，每个运行包含一组排序的文件。
+     *
+     * 返回值:
+     * 返回一个 Optional 的 CompactUnit，表示本次压缩操作需要处理的单元。
+     * 如果没有合适的压缩单元可选，则返回空值（Optional.empty()）。
      */
     Optional<CompactUnit> pick(int numLevels, List<LevelSortedRun> runs);
 
-    /** Pick a compaction unit consisting of all existing files. */
+    /**
+     * 选择一个由所有现有运行组成的全量压缩单元。
+     *
+     * 参数:
+     * - numLevels：运行的总级别数。
+     * - runs：按级别排序的运行列表。
+     *
+     * 返回值:
+     * 返回一个 Optional 的 CompactUnit，表示全量压缩的单元，如果无需压缩则返回空值。
+     */
     static Optional<CompactUnit> pickFullCompaction(int numLevels, List<LevelSortedRun> runs) {
-        int maxLevel = numLevels - 1;
+        int maxLevel = numLevels - 1; // 获取最大级别
         if (runs.isEmpty() || (runs.size() == 1 && runs.get(0).level() == maxLevel)) {
-            // no sorted run or only 1 sorted run on the max level, no need to compact
+            // 如果运行列表为空，或者只有一个运行在最大级别，无需压缩
             return Optional.empty();
         } else {
+            // 构造一个由最大级别运行组成的压缩单元
             return Optional.of(CompactUnit.fromLevelRuns(maxLevel, runs));
         }
     }

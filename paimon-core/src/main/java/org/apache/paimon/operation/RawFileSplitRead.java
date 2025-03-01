@@ -66,23 +66,43 @@ import java.util.Map;
 import static org.apache.paimon.predicate.PredicateBuilder.excludePredicateWithFields;
 import static org.apache.paimon.predicate.PredicateBuilder.splitAnd;
 
-/** A {@link SplitRead} to read raw file directly from {@link DataSplit}. */
+
+/**
+ * 这是一个实现 {@link SplitRead} 接口的类，用于直接从 {@link DataSplit} 中读取原始文件。
+ */
 public class RawFileSplitRead implements SplitRead<InternalRow> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RawFileSplitRead.class);
 
+    // 文件 I/O 组件，用于文件的读写操作
     private final FileIO fileIO;
+
+    // Schema 管理器，用于管理表的 Schema
     private final SchemaManager schemaManager;
+
+    // 表的 Schema，包含表的结构信息
     private final TableSchema schema;
+
+    // 文件格式发现器，用于根据文件格式选择相应的读取策略
     private final FileFormatDiscover formatDiscover;
+
+    // 文件存储路径生成器
     private final FileStorePathFactory pathFactory;
+
+    // 存储不同文件格式对应的批量读取映射
     private final Map<FormatKey, RawFileBulkFormatMapping> bulkFormatMappings;
+
+    // 是否启用文件索引读取
     private final boolean fileIndexReadEnabled;
 
+    // 数据投影，用于指定读取数据时的字段范围
     private int[][] projection;
 
-    @Nullable private List<Predicate> filters;
+    // 过滤条件，用于过滤读取的数据
+    @Nullable
+    private List<Predicate> filters;
 
+    // 构造函数，初始化 RawFileSplitRead 对象
     public RawFileSplitRead(
             FileIO fileIO,
             SchemaManager schemaManager,
@@ -99,41 +119,73 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
         this.bulkFormatMappings = new HashMap<>();
         this.fileIndexReadEnabled = fileIndexReadEnabled;
 
+        // 初始化投影为所有字段
         this.projection = Projection.range(0, rowType.getFieldCount()).toNestedIndexes();
     }
 
+    /**
+     * 强制保留删除标记的读取器。当前实现直接返回自身。
+     *
+     * @return 当前对象。
+     */
     @Override
     public SplitRead<InternalRow> forceKeepDelete() {
         return this;
     }
 
+    /**
+     * 设置 IO 管理器。当前实现直接返回自身。
+     *
+     * @param ioManager IO 管理器。
+     * @return 当前对象。
+     */
     @Override
     public SplitRead<InternalRow> withIOManager(@Nullable IOManager ioManager) {
         return this;
     }
 
+    /**
+     * 设置读取时的字段投影。
+     *
+     * @param projectedFields 字段投影。
+     * @return 当前对象。
+     */
     @Override
     public RawFileSplitRead withProjection(int[][] projectedFields) {
         if (projectedFields != null) {
-            projection = projectedFields;
+            projection = projectedFields; // 设置字段投影
         }
         return this;
     }
 
+    /**
+     * 设置读取时的过滤条件。
+     *
+     * @param predicate 过滤条件。
+     * @return 当前对象。
+     */
     @Override
     public RawFileSplitRead withFilter(Predicate predicate) {
         if (predicate != null) {
-            this.filters = splitAnd(predicate);
+            this.filters = splitAnd(predicate); // 分解过滤条件
         }
         return this;
     }
 
+    /**
+     * 创建记录读取器，用于从数据分片中读取数据。
+     *
+     * @param split 数据分片。
+     * @return 记录读取器。
+     * @throws IOException 如果发生 IO 错误。
+     */
     @Override
     public RecordReader<InternalRow> createReader(DataSplit split) throws IOException {
         if (split.beforeFiles().size() > 0) {
-            LOG.info("Ignore split before files: {}", split.beforeFiles());
+            LOG.info("Ignore split before files: {}", split.beforeFiles()); // 忽略前文件信息
         }
 
+        // 获取数据文件和删除向量工厂
         List<DataFileMeta> files = split.dataFiles();
         DeletionVector.Factory dvFactory =
                 DeletionVector.factory(fileIO, files, split.deletionFiles().orElse(null));
@@ -141,29 +193,42 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
         for (DataFileMeta file : files) {
             dvFactories.add(() -> dvFactory.create(file.fileName()).orElse(null));
         }
+
+        // 创建记录读取器
         return createReader(split.partition(), split.bucket(), split.dataFiles(), dvFactories);
     }
 
+    /**
+     * 创建记录读取器，用于从指定的分区、桶和文件列表中读取数据。
+     *
+     * @param partition   分区信息。
+     * @param bucket      桶编号。
+     * @param files       数据文件列表。
+     * @param dvFactories 删除向量工厂列表。
+     * @return 记录读取器。
+     * @throws IOException 如果发生 IO 错误。
+     */
     public RecordReader<InternalRow> createReader(
             BinaryRow partition,
             int bucket,
             List<DataFileMeta> files,
             @Nullable List<IOExceptionSupplier<DeletionVector>> dvFactories)
             throws IOException {
+        // 创建数据文件路径生成器
         DataFilePathFactory dataFilePathFactory =
                 pathFactory.createDataFilePathFactory(partition, bucket);
         List<ReaderSupplier<InternalRow>> suppliers = new ArrayList<>();
 
         for (int i = 0; i < files.size(); i++) {
             DataFileMeta file = files.get(i);
-            String formatIdentifier = DataFilePathFactory.formatIdentifier(file.fileName());
+            String formatIdentifier = DataFilePathFactory.formatIdentifier(file.fileName()); // 获取文件格式标识符
             RawFileBulkFormatMapping bulkFormatMapping =
                     bulkFormatMappings.computeIfAbsent(
-                            new FormatKey(file.schemaId(), formatIdentifier),
+                            new FormatKey(file.schemaId(), formatIdentifier), // 创建或获取格式映射
                             this::createBulkFormatMapping);
 
             IOExceptionSupplier<DeletionVector> dvFactory =
-                    dvFactories == null ? null : dvFactories.get(i);
+                    dvFactories == null ? null : dvFactories.get(i); // 获取删除向量工厂
             suppliers.add(
                     () ->
                             createFileReader(
@@ -174,19 +239,27 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
                                     dvFactory));
         }
 
+        // 返回合并后的记录读取器
         return ConcatRecordReader.create(suppliers);
     }
 
+    /**
+     * 创建格式映射对象，用于映射不同的文件格式和 Schema。
+     *
+     * @param key 格式键，包含 Schema ID 和格式标识符。
+     * @return 格式映射对象。
+     */
     private RawFileBulkFormatMapping createBulkFormatMapping(FormatKey key) {
         TableSchema tableSchema = schema;
-        TableSchema dataSchema =
+        TableSchema dataSchema = // 获取数据 Schema
                 key.schemaId == schema.id() ? schema : schemaManager.schema(key.schemaId);
 
-        // projection to data schema
+        // 创建数据投影
         int[][] dataProjection =
                 SchemaEvolutionUtil.createDataProjection(
                         tableSchema.fields(), dataSchema.fields(), projection);
 
+        // 创建索引转换映射
         IndexCastMapping indexCastMapping =
                 SchemaEvolutionUtil.createIndexCastMapping(
                         Projection.of(projection).toTopLevelIndexes(),
@@ -194,20 +267,20 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
                         Projection.of(dataProjection).toTopLevelIndexes(),
                         dataSchema.fields());
 
+        // 创建数据过滤条件
         List<Predicate> dataFilters =
                 this.schema.id() == key.schemaId
                         ? filters
                         : SchemaEvolutionUtil.createDataFilters(
-                                tableSchema.fields(), dataSchema.fields(), filters);
-        // Skip pushing down partition filters to reader
+                        tableSchema.fields(), dataSchema.fields(), filters);
         List<Predicate> nonPartitionFilters =
                 excludePredicateWithFields(dataFilters, new HashSet<>(dataSchema.partitionKeys()));
 
+        // 处理分区字段的投影
         Pair<int[], RowType> partitionPair = null;
         if (!dataSchema.partitionKeys().isEmpty()) {
             Pair<int[], int[][]> partitionMapping =
                     PartitionUtils.constructPartitionMapping(dataSchema, dataProjection);
-            // if partition fields are not selected, we just do nothing
             if (partitionMapping != null) {
                 dataProjection = partitionMapping.getRight();
                 partitionPair =
@@ -217,20 +290,31 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
             }
         }
 
+        // 创建投影后的行类型
         RowType projectedRowType =
                 Projection.of(dataProjection).project(dataSchema.logicalRowType());
 
+        // 返回格式映射对象
         return new RawFileBulkFormatMapping(
                 indexCastMapping.getIndexMapping(),
                 indexCastMapping.getCastMapping(),
                 partitionPair,
-                formatDiscover
-                        .discover(key.format)
-                        .createReaderFactory(projectedRowType, nonPartitionFilters),
+                formatDiscover.discover(key.format).createReaderFactory(projectedRowType, nonPartitionFilters),
                 dataSchema,
                 dataFilters);
     }
 
+    /**
+     * 创建文件读取器，用于从指定的文件中读取数据。
+     *
+     * @param partition           分区信息。
+     * @param file                数据文件。
+     * @param dataFilePathFactory 数据文件路径生成器。
+     * @param bulkFormatMapping   格式映射对象。
+     * @param dvFactory           删除向量工厂。
+     * @return 文件读取器。
+     * @throws IOException 如果发生 IO 错误。
+     */
     private RecordReader<InternalRow> createFileReader(
             BinaryRow partition,
             DataFileMeta file,
@@ -240,17 +324,18 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
             throws IOException {
         if (fileIndexReadEnabled) {
             boolean skip =
-                    FileIndexSkipper.skip(
+                    FileIndexSkipper.skip( // 判断是否跳过文件
                             fileIO,
                             bulkFormatMapping.getDataSchema(),
                             bulkFormatMapping.getDataFilters(),
                             dataFilePathFactory,
                             file);
             if (skip) {
-                return new EmptyRecordReader<>();
+                return new EmptyRecordReader<>(); // 如果跳过，返回空读取器
             }
         }
 
+        // 创建文件记录读取器
         FileRecordReader fileRecordReader =
                 new FileRecordReader(
                         bulkFormatMapping.getReaderFactory(),
@@ -262,14 +347,16 @@ public class RawFileSplitRead implements SplitRead<InternalRow> {
                         bulkFormatMapping.getCastMapping(),
                         PartitionUtils.create(bulkFormatMapping.getPartitionPair(), partition));
 
-        DeletionVector deletionVector = dvFactory == null ? null : dvFactory.get();
+        DeletionVector deletionVector = dvFactory == null ? null : dvFactory.get(); // 获取删除向量
         if (deletionVector != null && !deletionVector.isEmpty()) {
-            return new ApplyDeletionVectorReader(fileRecordReader, deletionVector);
+            return new ApplyDeletionVectorReader(fileRecordReader, deletionVector); // 使用删除向量读取器
         }
-        return fileRecordReader;
+        return fileRecordReader; // 直接返回文件记录读取器
     }
 
-    /** Bulk format mapping with data schema and data filters. */
+    /**
+     * 批量格式映射，包含数据 Schema 和过滤条件。
+     */
     private static class RawFileBulkFormatMapping extends BulkFormatMapping {
 
         private final TableSchema dataSchema;

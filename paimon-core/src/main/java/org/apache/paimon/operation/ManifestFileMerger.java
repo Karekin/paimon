@@ -63,10 +63,11 @@ public class ManifestFileMerger {
             long manifestFullCompactionSize,
             RowType partitionType,
             @Nullable Integer manifestReadParallelism) {
-        // these are the newly created manifest files, clean them up if exception occurs
+        // 这些是新创建的清单文件元数据，在异常情况下需要清理
         List<ManifestFileMeta> newMetas = new ArrayList<>();
 
         try {
+            // 尝试进行全量合并
             Optional<List<ManifestFileMeta>> fullCompacted =
                     tryFullCompaction(
                             input,
@@ -76,6 +77,7 @@ public class ManifestFileMerger {
                             manifestFullCompactionSize,
                             partitionType,
                             manifestReadParallelism);
+            // 如果全量合并成功，则返回结果，否则尝试小文件合并
             return fullCompacted.orElseGet(
                     () ->
                             tryMinorCompaction(
@@ -86,7 +88,7 @@ public class ManifestFileMerger {
                                     suggestedMinMetaCount,
                                     manifestReadParallelism));
         } catch (Throwable e) {
-            // exception occurs, clean up and rethrow
+            // 出现异常时，清理新创建的清单文件并重新抛出异常
             for (ManifestFileMeta manifest : newMetas) {
                 manifestFile.delete(manifest.fileName());
             }
@@ -94,6 +96,11 @@ public class ManifestFileMerger {
         }
     }
 
+    /**
+     * 尝试进行小文件合并
+     *
+     * 将输入的清单文件元数据进行合并，生成新的清单文件元数据列表
+     */
     private static List<ManifestFileMeta> tryMinorCompaction(
             List<ManifestFileMeta> input,
             List<ManifestFileMeta> newMetas,
@@ -104,12 +111,12 @@ public class ManifestFileMerger {
         List<ManifestFileMeta> result = new ArrayList<>();
         List<ManifestFileMeta> candidates = new ArrayList<>();
         long totalSize = 0;
-        // merge existing small manifest files
+        // 合并现有的小清单文件
         for (ManifestFileMeta manifest : input) {
             totalSize += manifest.fileSize();
             candidates.add(manifest);
             if (totalSize >= suggestedMetaSize) {
-                // reach suggested file size, perform merging and produce new file
+                // 达到建议的文件大小，执行合并并生成新文件
                 mergeCandidates(
                         candidates, manifestFile, result, newMetas, manifestReadParallelism);
                 candidates.clear();
@@ -117,7 +124,7 @@ public class ManifestFileMerger {
             }
         }
 
-        // merge the last bit of manifests if there are too many
+        // 如果剩余的清单数量过多，合并最后一部分
         if (candidates.size() >= suggestedMinMetaCount) {
             mergeCandidates(candidates, manifestFile, result, newMetas, manifestReadParallelism);
         } else {
@@ -126,6 +133,9 @@ public class ManifestFileMerger {
         return result;
     }
 
+    /**
+     * 合并候选清单文件元数据
+     */
     private static void mergeCandidates(
             List<ManifestFileMeta> candidates,
             ManifestFile manifestFile,
@@ -133,19 +143,27 @@ public class ManifestFileMerger {
             List<ManifestFileMeta> newMetas,
             @Nullable Integer manifestReadParallelism) {
         if (candidates.size() == 1) {
+            // 如果候选清单只有一个，直接加入结果
             result.add(candidates.get(0));
             return;
         }
 
+        // 合并清单条目
         Map<FileEntry.Identifier, ManifestEntry> map = new LinkedHashMap<>();
         FileEntry.mergeEntries(manifestFile, candidates, map, manifestReadParallelism);
         if (!map.isEmpty()) {
+            // 写入合并后的清单条目
             List<ManifestFileMeta> merged = manifestFile.write(new ArrayList<>(map.values()));
             result.addAll(merged);
             newMetas.addAll(merged);
         }
     }
 
+    /**
+     * 尝试进行全量合并
+     *
+     * 将输入的清单文件元数据进行全量合并，生成新的清单文件元数据列表
+     */
     public static Optional<List<ManifestFileMeta>> tryFullCompaction(
             List<ManifestFileMeta> inputs,
             List<ManifestFileMeta> newMetas,
@@ -155,14 +173,19 @@ public class ManifestFileMerger {
             RowType partitionType,
             @Nullable Integer manifestReadParallelism)
             throws Exception {
-        // 1. should trigger full compaction
+        // 1. 判断是否触发全量合并
 
         List<ManifestFileMeta> base = new ArrayList<>();
         long totalManifestSize = 0;
+
+        // 遍历输入的清单文件元数据
+        // base：包含未被删除且文件大小不小于建议大小的清单文件
+        // delta：包含被删除或文件大小较小的清单文件
         int i = 0;
         for (; i < inputs.size(); i++) {
             ManifestFileMeta file = inputs.get(i);
             if (file.numDeletedFiles() == 0 && file.fileSize() >= suggestedMetaSize) {
+                // 添加到 base
                 base.add(file);
                 totalManifestSize += file.fileSize();
             } else {
@@ -181,18 +204,19 @@ public class ManifestFileMerger {
             totalDeltaFileSize += file.fileSize();
         }
 
+        // 如果 delta 部分的总大小小于触发阈值，不进行全量合并
         if (totalDeltaFileSize < sizeTrigger) {
             return Optional.empty();
         }
 
-        // 2. do full compaction
+        // 2. 执行全量合并
 
         LOG.info(
                 "Start Manifest File Full Compaction, pick the number of delete file: {}, total manifest file size: {}",
                 deltaDeleteFileNum,
                 totalManifestSize);
 
-        // 2.1. try to skip base files by partition filter
+        // 2.1. 尝试通过分区过滤跳过 base 文件
 
         Map<FileEntry.Identifier, ManifestEntry> deltaMerged = new LinkedHashMap<>();
         FileEntry.mergeEntries(manifestFile, delta, deltaMerged, manifestReadParallelism);
@@ -200,12 +224,14 @@ public class ManifestFileMerger {
         List<ManifestFileMeta> result = new ArrayList<>();
         int j = 0;
         if (partitionType.getFieldCount() > 0) {
+            // 计算 delta 合并后的删除分区集合
             Set<BinaryRow> deletePartitions = computeDeletePartitions(deltaMerged);
+            // 构建分区谓词
             PartitionPredicate predicate =
                     PartitionPredicate.fromMultiple(partitionType, deletePartitions);
             if (predicate != null) {
+                // 遍历 base 清单文件元数据，过滤掉与删除分区相关的文件
                 for (; j < base.size(); j++) {
-                    // TODO: optimize this to binary search.
                     ManifestFileMeta file = base.get(j);
                     if (predicate.test(
                             file.numAddedFiles() + file.numDeletedFiles(),
@@ -218,14 +244,15 @@ public class ManifestFileMerger {
                     }
                 }
             } else {
-                // There is no DELETE Entry in Delta, Base don't need compaction
+                // delta 中没有删除条目，base 不需要合并
                 j = base.size();
                 result.addAll(base);
             }
         }
 
-        // 2.2. try to skip base files by reading entries
+        // 2.2. 通过读取条目尝试跳过 base 文件
 
+        // 收集 delta 合并后的删除条目
         Set<FileEntry.Identifier> deleteEntries = new HashSet<>();
         deltaMerged.forEach(
                 (k, v) -> {
@@ -247,29 +274,30 @@ public class ManifestFileMerger {
                 }
             }
             if (contains) {
-                // already read this file into fullMerged
+                // 该文件包含需要删除的条目，无法跳过
                 j++;
                 break;
             } else {
+                // 该文件不包含需要删除的条目，可以直接添加到结果中
                 mergedEntries.clear();
                 result.add(file);
             }
         }
 
-        // 2.3. merge
+        // 2.3. 执行合并
 
         RollingFileWriter<ManifestEntry, ManifestFileMeta> writer =
                 manifestFile.createRollingWriter();
         Exception exception = null;
         try {
 
-            // 2.3.1 merge mergedEntries
+            // 2.3.1 合并 mergedEntries
             for (ManifestEntry entry : mergedEntries) {
                 writer.write(entry);
             }
             mergedEntries.clear();
 
-            // 2.3.2 merge base files
+            // 2.3.2 合并 base 中剩余的文件
             for (ManifestEntry entry :
                     FileEntry.readManifestEntries(
                             manifestFile, base.subList(j, base.size()), manifestReadParallelism)) {
@@ -279,7 +307,7 @@ public class ManifestFileMerger {
                 }
             }
 
-            // 2.3.3 merge deltaMerged
+            // 2.3.3 合并 deltaMerged
             for (ManifestEntry entry : deltaMerged.values()) {
                 if (entry.kind() == FileKind.ADD) {
                     writer.write(entry);
@@ -295,15 +323,22 @@ public class ManifestFileMerger {
             writer.close();
         }
 
+        // 获取合并后的清单文件元数据
         List<ManifestFileMeta> merged = writer.result();
         result.addAll(merged);
         newMetas.addAll(merged);
         return Optional.of(result);
     }
 
+    /**
+     * 计算删除分区集合
+     *
+     * 根据 delta 合并后的清单条目，提取删除分区的信息
+     */
     private static Set<BinaryRow> computeDeletePartitions(
             Map<FileEntry.Identifier, ManifestEntry> deltaMerged) {
         Set<BinaryRow> partitions = new HashSet<>();
+        // 遍历 delta 合并后的清单条目
         for (ManifestEntry manifestEntry : deltaMerged.values()) {
             if (manifestEntry.kind() == FileKind.DELETE) {
                 BinaryRow partition = manifestEntry.partition();

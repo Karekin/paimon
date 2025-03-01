@@ -6,15 +6,37 @@
   <component name="ChangeListManager">
     <list default="true" id="b4c4ac99-5cad-42e3-9468-db772ba6a63f" name="Changes" comment="doc: 学习paimon源码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/CoreOptions.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/CoreOptions.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/KeyValueFileStore.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/KeyValueFileStore.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeFunctionFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeFunctionFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/KeyValueFileStoreScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/KeyValueFileStoreScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/stats/SimpleStatsConverters.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/stats/SimpleStatsConverters.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/SnapshotManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/SnapshotManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-e2e-tests/target/classes/docker-compose.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-e2e-tests/target/classes/docker-compose.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/compression/CompressOptions.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/compression/CompressOptions.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/reader/RecordReaderIterator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/reader/RecordReaderIterator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/AppendOnlyFileStore.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/AppendOnlyFileStore.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/BucketedAppendCompactManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/BucketedAppendCompactManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/UnawareAppendCompactionTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/UnawareAppendCompactionTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/UnawareAppendTableCompactionCoordinator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/append/UnawareAppendTableCompactionCoordinator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactDeletionFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactDeletionFile.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/compact/CompactTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeSorter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeSorter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeReaders.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeReaders.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/AbstractCompactRewriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/AbstractCompactRewriter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/CompactRewriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/CompactRewriter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/CompactStrategy.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/CompactStrategy.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/FirstRowMergeFunctionWrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/FirstRowMergeFunctionWrapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/ForceUpLevel0Compaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/ForceUpLevel0Compaction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/FullChangelogMergeFunctionWrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/FullChangelogMergeFunctionWrapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/LookupMergeFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/LookupMergeFunction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactRewriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactRewriter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/MergeTreeCompactTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/SortMergeReaderWithMinHeap.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/SortMergeReaderWithMinHeap.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/UniversalCompaction.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/UniversalCompaction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AppendOnlyFileStoreWrite.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AppendOnlyFileStoreWrite.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/ManifestFileMerger.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/ManifestFileMerger.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/metrics/CompactionMetrics.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/metrics/CompactionMetrics.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/DataSplit.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/DataSplit.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/compact/UnawareBucketCompactor.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/compact/UnawareBucketCompactor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/AppendBypassCompactWorkerOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/AppendBypassCompactWorkerOperator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/AppendCompactWorkerOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/AppendCompactWorkerOperator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/UnawareBucketSink.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/UnawareBucketSink.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/AppendBypassCoordinateOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/source/AppendBypassCoordinateOperator.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -271,7 +293,7 @@
       <workItem from="1740701749532" duration="1348000" />
       <workItem from="1740718044749" duration="2161000" />
       <workItem from="1740742369098" duration="18866000" />
-      <workItem from="1740790944394" duration="4024000" />
+      <workItem from="1740790944394" duration="26931000" />
     </task>
     <task id="LOCAL-00001" summary="20241121初始化">
       <option name="closed" value="true" />
@@ -340,7 +362,21 @@
       <option name="project" value="LOCAL" />
       <updated>1740763444671</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="doc: 学习paimon源码">
+      <created>1740795908694</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1740795908694</updated>
+    </task>
+    <task id="LOCAL-00011" summary="doc: 学习paimon源码">
+      <created>1740809712926</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1740809712926</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -518,7 +554,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/reader/RecordReader.java</url>
-          <line>193</line>
+          <line>195</line>
           <option name="timeStamp" value="561" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -550,16 +586,6 @@
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
           <line>997</line>
           <option name="timeStamp" value="658" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/ManifestFileMerger.java</url>
-          <line>103</line>
-          <option name="timeStamp" value="662" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/utils/ObjectsFile.java</url>
-          <line>147</line>
-          <option name="timeStamp" value="663" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
@@ -608,7 +634,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/snapshot/SnapshotReaderImpl.java</url>
-          <line>258</line>
+          <line>300</line>
           <option name="timeStamp" value="765" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -1056,7 +1082,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/SortMergeReaderWithMinHeap.java</url>
-          <line>76</line>
+          <line>96</line>
           <option name="timeStamp" value="933" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -1091,21 +1117,13 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeSorter.java</url>
-          <line>127</line>
+          <line>164</line>
           <option name="timeStamp" value="953" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/MergeFileSplitRead.java</url>
           <line>266</line>
           <option name="timeStamp" value="954" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeReaders.java</url>
-          <line>97</line>
-          <properties>
-            <option name="lambda-ordinal" value="-1" />
-          </properties>
-          <option name="timeStamp" value="957" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/io/KeyValueFileReaderFactory.java</url>
@@ -1143,16 +1161,6 @@
           <option name="timeStamp" value="966" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeReaders.java</url>
-          <line>74</line>
-          <option name="timeStamp" value="968" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeReaders.java</url>
-          <line>85</line>
-          <option name="timeStamp" value="969" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/ConcatRecordReader.java</url>
           <line>63</line>
           <option name="timeStamp" value="975" />
@@ -1179,12 +1187,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java</url>
-          <line>156</line>
+          <line>221</line>
           <option name="timeStamp" value="987" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java</url>
-          <line>143</line>
+          <line>197</line>
           <option name="timeStamp" value="988" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">

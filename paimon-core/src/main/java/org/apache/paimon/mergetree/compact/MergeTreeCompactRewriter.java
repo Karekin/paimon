@@ -42,16 +42,41 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 
-/** Default {@link CompactRewriter} for merge trees. */
+/**
+ * 默认的 {@link CompactRewriter} 实现，用于合并树（Merge Tree）的压缩。
+ *
+ * 该类提供了合并树压缩的重写逻辑，实现了将多个运行（Sorted Run）合并到一个或多个目标文件的功能。
+ */
 public class MergeTreeCompactRewriter extends AbstractCompactRewriter {
 
+    // 用于读取数据文件的文件读取器工厂
     protected final FileReaderFactory<KeyValue> readerFactory;
+
+    // 用于写入数据文件的文件写入器工厂
     protected final KeyValueFileWriterFactory writerFactory;
+
+    // 数据键的比较器
     protected final Comparator<InternalRow> keyComparator;
+
+    // 用户定义的序列号比较器
     @Nullable protected final FieldsComparator userDefinedSeqComparator;
+
+    // 合并函数工厂
     protected final MergeFunctionFactory<KeyValue> mfFactory;
+
+    // 合并排序器
     protected final MergeSorter mergeSorter;
 
+    /**
+     * 构造函数，初始化 MergeTreeCompactRewriter 对象。
+     *
+     * @param readerFactory 文件读取器工厂
+     * @param writerFactory 文件写入器工厂
+     * @param keyComparator 数据键的比较器
+     * @param userDefinedSeqComparator 用户定义的序列号比较器
+     * @param mfFactory 合并函数工厂
+     * @param mergeSorter 合并排序器
+     */
     public MergeTreeCompactRewriter(
             FileReaderFactory<KeyValue> readerFactory,
             KeyValueFileWriterFactory writerFactory,
@@ -59,65 +84,95 @@ public class MergeTreeCompactRewriter extends AbstractCompactRewriter {
             @Nullable FieldsComparator userDefinedSeqComparator,
             MergeFunctionFactory<KeyValue> mfFactory,
             MergeSorter mergeSorter) {
-        this.readerFactory = readerFactory;
-        this.writerFactory = writerFactory;
-        this.keyComparator = keyComparator;
-        this.userDefinedSeqComparator = userDefinedSeqComparator;
-        this.mfFactory = mfFactory;
-        this.mergeSorter = mergeSorter;
+        this.readerFactory = readerFactory; // 文件读取器工厂
+        this.writerFactory = writerFactory; // 文件写入器工厂
+        this.keyComparator = keyComparator; // 数据键比较器
+        this.userDefinedSeqComparator = userDefinedSeqComparator; // 序列号比较器
+        this.mfFactory = mfFactory; // 合并函数工厂
+        this.mergeSorter = mergeSorter; // 合并排序器
     }
 
     @Override
     public CompactResult rewrite(
             int outputLevel, boolean dropDelete, List<List<SortedRun>> sections) throws Exception {
-        return rewriteCompaction(outputLevel, dropDelete, sections);
+        return rewriteCompaction(outputLevel, dropDelete, sections); // 调用重写压缩方法
     }
 
+    /**
+     * 执行合并树的压缩重写逻辑。
+     *
+     * @param outputLevel 输出级别
+     * @param dropDelete 是否丢弃删除标记
+     * @param sections 合并的运行列表
+     * @return 返回压缩结果
+     * @throws Exception 重写过程中可能抛出的异常
+     */
     protected CompactResult rewriteCompaction(
             int outputLevel, boolean dropDelete, List<List<SortedRun>> sections) throws Exception {
-        RollingFileWriter<KeyValue, DataFileMeta> writer =
+        RollingFileWriter<KeyValue, DataFileMeta> writer = // 创建滚动写入器
                 writerFactory.createRollingMergeTreeFileWriter(outputLevel, FileSource.COMPACT);
-        RecordReader<KeyValue> reader = null;
-        Exception collectedExceptions = null;
+
+        RecordReader<KeyValue> reader = null; // 创建记录读取器
+        Exception collectedExceptions = null; // 收集异常
+
         try {
-            reader =
-                    readerForMergeTree(
-                            sections, new ReducerMergeFunctionWrapper(mfFactory.create()));
+            // 创建合并树的记录读取器
+            reader = readerForMergeTree(sections, new ReducerMergeFunctionWrapper(mfFactory.create()));
+
+            // 如果需要丢弃删除标记，使用 DropDeleteReader 装饰器
             if (dropDelete) {
                 reader = new DropDeleteReader(reader);
             }
+
+            // 写入数据到目标文件
             writer.write(new RecordReaderIterator<>(reader));
         } catch (Exception e) {
-            collectedExceptions = e;
+            collectedExceptions = e; // 捕获异常
         } finally {
             try {
+                // 确保资源关闭
                 IOUtils.closeAll(reader, writer);
             } catch (Exception e) {
-                collectedExceptions = ExceptionUtils.firstOrSuppressed(e, collectedExceptions);
+                collectedExceptions = ExceptionUtils.firstOrSuppressed(e, collectedExceptions); // 记录异常
             }
         }
 
+        // 如果发生异常，中断写入并抛出
         if (null != collectedExceptions) {
             writer.abort();
             throw collectedExceptions;
         }
 
+        // 提取压缩前的文件元数据并返回压缩结果
         List<DataFileMeta> before = extractFilesFromSections(sections);
         notifyRewriteCompactBefore(before);
         return new CompactResult(before, writer.result());
     }
 
+    /**
+     * 创建合并树的记录读取器。
+     *
+     * @param sections 合并的运行列表
+     * @param mergeFunctionWrapper 合并函数包装器
+     * @return 返回记录读取器
+     * @throws IOException 读取文件时可能抛出的异常
+     */
     protected <T> RecordReader<T> readerForMergeTree(
             List<List<SortedRun>> sections, MergeFunctionWrapper<T> mergeFunctionWrapper)
             throws IOException {
         return MergeTreeReaders.readerForMergeTree(
-                sections,
-                readerFactory,
-                keyComparator,
-                userDefinedSeqComparator,
-                mergeFunctionWrapper,
-                mergeSorter);
+                sections, // 运行列表
+                readerFactory, // 文件读取器工厂
+                keyComparator, // 数据键比较器
+                userDefinedSeqComparator, // 序列号比较器
+                mergeFunctionWrapper, // 合并函数包装器
+                mergeSorter); // 合并排序器
     }
 
+    /**
+     * 通知重写压缩前的文件元数据。
+     *
+     * @param files 压缩前的文件元数据
+     */
     protected void notifyRewriteCompactBefore(List<DataFileMeta> files) {}
 }

@@ -63,31 +63,75 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
-/** {@link FileStoreWrite} for {@link AppendOnlyFileStore}. */
+/**
+ * AppendOnlyFileStore 的文件存储写入器。
+ * 这个类负责处理对 AppendOnlyFileStore 的写入操作，包括文件的创建、数据写入、合并等。
+ * @author snowblink123
+ * @create 2023-09-18 0:11
+ */
 public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
         implements BundleFileStoreWriter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AppendOnlyFileStoreWrite.class);
 
+    // 文件 I/O 操作工具
     private final FileIO fileIO;
+
+    // 原始文件切片读取工具
     private final RawFileSplitRead read;
+
+    // 数据 Schema 的 ID
     private final long schemaId;
+
+    // Row 的类型结构
     private final RowType rowType;
+
+    // 文件存储的文件格式
     private final FileFormat fileFormat;
+
+    // 文件存储路径的生成工厂
     private final FileStorePathFactory pathFactory;
+
+    // 文件的目标大小
     private final long targetFileSize;
+
+    // 合并操作的最小文件数量
     private final int compactionMinFileNum;
+
+    // 合并操作的最大文件数量
     private final int compactionMaxFileNum;
+
+    // 提交时是否强制执行合并
     private final boolean commitForceCompact;
+
+    // 文件的压缩格式
     private final String fileCompression;
+
+    // 内存溢写时的压缩选项
     private final CompressOptions spillCompression;
+
+    // 是否使用写入缓冲区
     private final boolean useWriteBuffer;
+
+    // 是否允许内存溢写到磁盘
     private final boolean spillable;
+
+    // 内存溢写到磁盘的最大磁盘空间
     private final MemorySize maxDiskSize;
+
+    // 统计信息收集器的工厂
     private final SimpleColStatsCollector.Factory[] statsCollectors;
+
+    // 文件索引的选项
     private final FileIndexOptions fileIndexOptions;
+
+    // 桶模式
     private final BucketMode bucketMode;
+
+    // 是否强制写入缓冲区溢写
     private boolean forceBufferSpill = false;
+
+    // 是否跳过合并操作
     private final boolean skipCompaction;
 
     public AppendOnlyFileStoreWrite(
@@ -103,6 +147,7 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
             BucketMode bucketMode,
             @Nullable DeletionVectorsMaintainer.Factory dvMaintainerFactory,
             String tableName) {
+        // 初始化父类
         super(commitUser, snapshotManager, scan, options, null, dvMaintainerFactory, tableName);
         this.fileIO = fileIO;
         this.read = read;
@@ -115,8 +160,7 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
         this.compactionMinFileNum = options.compactionMinFileNum();
         this.compactionMaxFileNum = options.compactionMaxFileNum().orElse(5);
         this.commitForceCompact = options.commitForceCompact();
-        // AppendOnlyFileStoreWrite is sensitive with bucket mode. It will act difference in
-        // unaware-bucket mode (no compaction and force empty-writer).
+        // 如果是 Unaware 模式，跳过合并操作
         if (bucketMode == BucketMode.BUCKET_UNAWARE) {
             super.withIgnorePreviousFiles(true);
             this.skipCompaction = true;
@@ -133,6 +177,20 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
         this.fileIndexOptions = options.indexColumnsOptions();
     }
 
+    /**
+     * 创建 RecordWriter 用于写入数据。
+     * 这个方法会根据是否需要合并操作来创建不同的写入器。
+     *
+     * @param snapshotId           快照 ID
+     * @param partition            数据分区
+     * @param bucket               桶 ID
+     * @param restoredFiles        恢复的文件元数据列表
+     * @param restoredMaxSeqNumber 恢复的最大序列号
+     * @param restoreIncrement     恢复的提交增量
+     * @param compactExecutor      合并线程池
+     * @param dvMaintainer         删除向量维护者
+     * @return 记录写入器
+     */
     @Override
     protected RecordWriter<InternalRow> createWriter(
             @Nullable Long snapshotId,
@@ -143,8 +201,12 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
             @Nullable CommitIncrement restoreIncrement,
             ExecutorService compactExecutor,
             @Nullable DeletionVectorsMaintainer dvMaintainer) {
+        // 默认使用空操作合并管理器
         CompactManager compactManager = new NoopCompactManager();
+
+        // 如果不跳过合并，则创建合并管理器
         if (!skipCompaction) {
+            // 使用删除向量维护者创建删除向量工厂
             Function<String, DeletionVector> dvFactory =
                     dvMaintainer != null
                             ? f -> dvMaintainer.deletionVectorOf(f).orElse(null)
@@ -163,6 +225,7 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
                                     : compactionMetrics.createReporter(partition, bucket));
         }
 
+        // 创建 AppendOnlyWriter 用于写入数据
         return new AppendOnlyWriter(
                 fileIO,
                 ioManager,
@@ -172,7 +235,6 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
                 rowType,
                 restoredMaxSeqNumber,
                 compactManager,
-                // it is only for new files, no dv
                 files -> createFilesIterator(partition, bucket, files, null),
                 commitForceCompact,
                 pathFactory.createDataFilePathFactory(partition, bucket),
@@ -187,6 +249,17 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
                 options.asyncFileWrite());
     }
 
+    /**
+     * 执行文件合并操作。
+     * 这个方法会重写文件并返回合并后的文件元数据列表。
+     *
+     * @param partition 数据分区
+     * @param bucket    桶 ID
+     * @param dvFactory 删除向量工厂
+     * @param toCompact 需要合并的文件元数据列表
+     * @return 合并后的文件元数据列表
+     * @throws Exception 如果合并过程发生异常
+     */
     public List<DataFileMeta> compactRewrite(
             BinaryRow partition,
             int bucket,
@@ -203,30 +276,48 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
                         bucket,
                         new LongCounter(toCompact.get(0).minSequenceNumber()),
                         FileSource.COMPACT);
+
         List<IOExceptionSupplier<DeletionVector>> dvFactories = null;
         if (dvFactory != null) {
+            // 创建删除向量工厂列表
             dvFactories = new ArrayList<>(toCompact.size());
             for (DataFileMeta file : toCompact) {
                 dvFactories.add(() -> dvFactory.apply(file.fileName()));
             }
         }
+
         try {
+            // 写入合并后的内容
             rewriter.write(createFilesIterator(partition, bucket, toCompact, dvFactories));
         } catch (Exception e) {
             collectedExceptions = e;
         } finally {
             try {
+                // 关闭写入器
                 rewriter.close();
             } catch (Exception e) {
-                collectedExceptions = ExceptionUtils.firstOrSuppressed(e, collectedExceptions);
+                // 收集异常
+                collectedExceptions =
+                        ExceptionUtils.firstOrSuppressed(e, collectedExceptions);
             }
         }
+
         if (collectedExceptions != null) {
             throw collectedExceptions;
         }
+
         return rewriter.result();
     }
 
+    /**
+     * 创建一个 RowDataRollingFileWriter，用于写入滚动文件。
+     *
+     * @param partition    数据分区
+     * @param bucket       桶 ID
+     * @param seqNumCounter 序列号计数器
+     * @param fileSource   文件来源
+     * @return RowDataRollingFileWriter
+     */
     private RowDataRollingFileWriter createRollingFileWriter(
             BinaryRow partition, int bucket, LongCounter seqNumCounter, FileSource fileSource) {
         return new RowDataRollingFileWriter(
@@ -244,18 +335,29 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
                 options.asyncFileWrite());
     }
 
+    /**
+     * 创建一个 RecordReaderIterator，用于读取文件中的记录。
+     *
+     * @param partition 数据分区
+     * @param bucket    桶 ID
+     * @param files     文件元数据列表
+     * @param dvFactories 删除向量工厂列表
+     * @return RecordReaderIterator
+     * @throws IOException 如果读取文件时发生 I/O 异常
+     */
     private RecordReaderIterator<InternalRow> createFilesIterator(
             BinaryRow partition,
             int bucket,
             List<DataFileMeta> files,
             @Nullable List<IOExceptionSupplier<DeletionVector>> dvFactories)
             throws IOException {
-        return new RecordReaderIterator<>(read.createReader(partition, bucket, files, dvFactories));
+        return new RecordReaderIterator<>(
+                read.createReader(partition, bucket, files, dvFactories));
     }
 
     @Override
     public void withIgnorePreviousFiles(boolean ignorePrevious) {
-        // in unaware bucket mode, we need all writers to be empty
+        // 如果是 Unaware 模式，则需要忽略之前的文件
         super.withIgnorePreviousFiles(ignorePrevious || bucketMode == BucketMode.BUCKET_UNAWARE);
     }
 
@@ -264,12 +366,14 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
         if (ioManager == null) {
             return;
         }
+        // 强制内存溢写
         forceBufferSpill = true;
         LOG.info(
                 "Force buffer spill for append-only file store write, writer number is: {}",
                 writers.size());
         for (Map<Integer, WriterContainer<InternalRow>> bucketWriters : writers.values()) {
             for (WriterContainer<InternalRow> writerContainer : bucketWriters.values()) {
+                // 将写入器转换为缓冲写入器
                 ((AppendOnlyWriter) writerContainer.writer).toBufferedWriter();
             }
         }
@@ -278,7 +382,9 @@ public class AppendOnlyFileStoreWrite extends MemoryFileStoreWrite<InternalRow>
     @Override
     public void writeBundle(BinaryRow partition, int bucket, BundleRecords bundle)
             throws Exception {
+        // 获取写入器容器
         WriterContainer<InternalRow> container = getWriterWrapper(partition, bucket);
+        // 写入记录包
         ((AppendOnlyWriter) container.writer).writeBundle(bundle);
     }
 }

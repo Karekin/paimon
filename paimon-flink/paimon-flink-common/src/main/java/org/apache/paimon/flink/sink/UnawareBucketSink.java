@@ -31,24 +31,23 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
- * Sink for unaware-bucket table.
+ * 用于非分区表的 Sink。
  *
- * <p>Note: in unaware-bucket mode, we don't shuffle by bucket in inserting. We can assign
- * compaction to the inserting jobs aside.
+ * <p>注意：在非分区模式下，插入数据时不按分区进行洗牌。我们可以将整理操作与插入作业分开执行。
  */
 public abstract class UnawareBucketSink<T> extends FlinkWriteSink<T> {
 
-    protected final FileStoreTable table;
-    protected final LogSinkFunction logSinkFunction;
+    protected final FileStoreTable table; // 文件存储表对象
+    protected final LogSinkFunction logSinkFunction; // 日志写入函数
 
-    @Nullable protected final Integer parallelism;
+    @Nullable protected final Integer parallelism; // 并行度，可为空
 
     public UnawareBucketSink(
             FileStoreTable table,
             @Nullable Map<String, String> overwritePartitions,
             LogSinkFunction logSinkFunction,
             @Nullable Integer parallelism) {
-        super(table, overwritePartitions);
+        super(table, overwritePartitions); // 调用父类构造方法
         this.table = table;
         this.logSinkFunction = logSinkFunction;
         this.parallelism = parallelism;
@@ -59,27 +58,28 @@ public abstract class UnawareBucketSink<T> extends FlinkWriteSink<T> {
             DataStream<T> input, String initialCommitUser, @Nullable Integer parallelism) {
         DataStream<Committable> written = super.doWrite(input, initialCommitUser, this.parallelism);
 
-        boolean enableCompaction = !table.coreOptions().writeOnly();
+        boolean enableCompaction = !table.coreOptions().writeOnly(); // 是否启用压缩
         boolean isStreamingMode =
                 input.getExecutionEnvironment()
-                                .getConfiguration()
-                                .get(ExecutionOptions.RUNTIME_MODE)
-                        == RuntimeExecutionMode.STREAMING;
-        // if enable compaction, we need to add compaction topology to this job
+                        .getConfiguration()
+                        .get(ExecutionOptions.RUNTIME_MODE)
+                        == RuntimeExecutionMode.STREAMING; // 是否为流处理模式
+
+        // 如果启用压缩且处于流处理模式，则添加压缩拓扑
         if (enableCompaction && isStreamingMode) {
             written =
                     written.transform(
+                                    // 添加紧凑协调器操作
                                     "Compact Coordinator: " + table.name(),
-                                    new EitherTypeInfo<>(
-                                            new CommittableTypeInfo(),
-                                            new CompactionTaskTypeInfo()),
+                                    new EitherTypeInfo<>(new CommittableTypeInfo(), new CompactionTaskTypeInfo()),
                                     new AppendBypassCoordinateOperatorFactory<>(table))
-                            .forceNonParallel()
+                            .forceNonParallel() // 强制非并行
                             .transform(
+                                    // 添加紧凑工作线程操作
                                     "Compact Worker: " + table.name(),
                                     new CommittableTypeInfo(),
                                     new AppendBypassCompactWorkerOperator(table, initialCommitUser))
-                            .setParallelism(written.getParallelism());
+                            .setParallelism(written.getParallelism()); // 设置并行度
         }
 
         return written;

@@ -36,11 +36,28 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** Utility class to create commonly used {@link RecordReader}s for merge trees. */
+/**
+ * 用于创建合并树（Merge Tree）的常用 {@link RecordReader} 的工具类。
+ *
+ * 该类提供了一系列静态方法，用于从多个排序的运行（Sorted Run）中创建记录读取器。
+ * 这些方法能够将多个数据源合并并排序，以支持数据的有序读取。
+ */
 public class MergeTreeReaders {
 
-    private MergeTreeReaders() {}
+    private MergeTreeReaders() {} // 私有构造器，禁止实例化
 
+    /**
+     * 创建用于合并树的记录读取器。
+     *
+     * @param sections 运行列表（每个运行是一个 {@link SortedRun} 列表）
+     * @param readerFactory 文件读取器工厂
+     * @param userKeyComparator 用户键比较器
+     * @param userDefinedSeqComparator 用户定义的序列号比较器
+     * @param mergeFunctionWrapper 合并函数包装器
+     * @param mergeSorter 合并排序器
+     * @return 返回合并树的记录读取器
+     * @throws IOException 创建记录读取器时可能抛出的异常
+     */
     public static <T> RecordReader<T> readerForMergeTree(
             List<List<SortedRun>> sections,
             FileReaderFactory<KeyValue> readerFactory,
@@ -49,21 +66,31 @@ public class MergeTreeReaders {
             MergeFunctionWrapper<T> mergeFunctionWrapper,
             MergeSorter mergeSorter)
             throws IOException {
-        List<ReaderSupplier<T>> readers = new ArrayList<>();
-        for (List<SortedRun> section : sections) {
-            readers.add(
-                    () ->
-                            readerForSection(
-                                    section,
-                                    readerFactory,
-                                    userKeyComparator,
-                                    userDefinedSeqComparator,
-                                    mergeFunctionWrapper,
-                                    mergeSorter));
+        List<ReaderSupplier<T>> readers = new ArrayList<>(); // 创建一个读取器供应商列表
+        for (List<SortedRun> section : sections) { // 遍历每个运行列表
+            readers.add(() -> readerForSection(
+                    section, // 当前运行列表
+                    readerFactory, // 文件读取器工厂
+                    userKeyComparator, // 用户键比较器
+                    userDefinedSeqComparator, // 用户定义的序列号比较器
+                    mergeFunctionWrapper, // 合并函数包装器
+                    mergeSorter)); // 合并排序器
         }
-        return ConcatRecordReader.create(readers);
+        return ConcatRecordReader.create(readers); // 创建合并的记录读取器
     }
 
+    /**
+     * 为单个运行列表创建记录读取器。
+     *
+     * @param section 运行列表
+     * @param readerFactory 文件读取器工厂
+     * @param userKeyComparator 用户键比较器
+     * @param userDefinedSeqComparator 用户定义的序列号比较器
+     * @param mergeFunctionWrapper 合并函数包装器
+     * @param mergeSorter 合并排序器
+     * @return 返回记录读取器
+     * @throws IOException 创建记录读取器时可能抛出的异常
+     */
     public static <T> RecordReader<T> readerForSection(
             List<SortedRun> section,
             FileReaderFactory<KeyValue> readerFactory,
@@ -72,31 +99,41 @@ public class MergeTreeReaders {
             MergeFunctionWrapper<T> mergeFunctionWrapper,
             MergeSorter mergeSorter)
             throws IOException {
-        List<SizedReaderSupplier<KeyValue>> readers = new ArrayList<>();
-        for (SortedRun run : section) {
-            readers.add(
-                    new SizedReaderSupplier<KeyValue>() {
-                        @Override
-                        public long estimateSize() {
-                            return run.totalSize();
-                        }
+        List<SizedReaderSupplier<KeyValue>> readers = new ArrayList<>(); // 创建一个带大小信息的读取器供应商列表
+        for (SortedRun run : section) { // 遍历每个运行
+            readers.add(new SizedReaderSupplier<KeyValue>() { // 创建带大小信息的读取器供应商
+                @Override
+                public long estimateSize() {
+                    return run.totalSize(); // 返回运行的大小
+                }
 
-                        @Override
-                        public RecordReader<KeyValue> get() throws IOException {
-                            return readerForRun(run, readerFactory);
-                        }
-                    });
+                @Override
+                public RecordReader<KeyValue> get() throws IOException { // 获取记录读取器
+                    return readerForRun(run, readerFactory); // 创建运行的记录读取器
+                }
+            });
         }
-        return mergeSorter.mergeSort(
-                readers, userKeyComparator, userDefinedSeqComparator, mergeFunctionWrapper);
+        return mergeSorter.mergeSort( // 使用合并排序器合并和排序读取器
+                readers,
+                userKeyComparator, // 用户键比较器
+                userDefinedSeqComparator, // 用户定义的序列号比较器
+                mergeFunctionWrapper); // 合并函数包装器
     }
 
+    /**
+     * 为单个运行创建记录读取器。
+     *
+     * @param run 运行
+     * @param readerFactory 文件读取器工厂
+     * @return 返回记录读取器
+     * @throws IOException 创建记录读取器时可能抛出的异常
+     */
     private static RecordReader<KeyValue> readerForRun(
             SortedRun run, FileReaderFactory<KeyValue> readerFactory) throws IOException {
-        List<ReaderSupplier<KeyValue>> readers = new ArrayList<>();
-        for (DataFileMeta file : run.files()) {
-            readers.add(() -> readerFactory.createRecordReader(file));
+        List<ReaderSupplier<KeyValue>> readers = new ArrayList<>(); // 创建一个读取器供应商列表
+        for (DataFileMeta file : run.files()) { // 遍历运行中的文件
+            readers.add(() -> readerFactory.createRecordReader(file)); // 创建文件的记录读取器
         }
-        return ConcatRecordReader.create(readers);
+        return ConcatRecordReader.create(readers); // 创建合并的记录读取器
     }
 }

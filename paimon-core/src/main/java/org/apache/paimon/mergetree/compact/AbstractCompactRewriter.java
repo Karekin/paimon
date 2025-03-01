@@ -26,23 +26,35 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-
-/** Common implementation of {@link CompactRewriter}. */
+/**
+ * 提供对 {@link CompactRewriter} 的通用实现。
+ *
+ * 该抽象类实现了部分 {@link CompactRewriter} 接口的方法，提供了通用的逻辑和基础实现。
+ */
 public abstract class AbstractCompactRewriter implements CompactRewriter {
 
     @Override
     public CompactResult upgrade(int outputLevel, DataFileMeta file) throws Exception {
+        // 升级指定的数据文件到指定的输出级别，并返回压缩结果
         return new CompactResult(file, file.upgrade(outputLevel));
     }
 
+    /**
+     * 从多个运行列表中提取数据文件元数据。
+     *
+     * @param sections 运行列表
+     * @return 返回提取出的数据文件元数据列表
+     */
     protected static List<DataFileMeta> extractFilesFromSections(List<List<SortedRun>> sections) {
-        return sections.stream()
-                .flatMap(Collection::stream)
-                .map(SortedRun::files)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        return sections.stream() // 将运行列表转为流
+                .flatMap(Collection::stream) // 扁平化运行
+                .map(SortedRun::files) // 获取每个运行的文件元数据列表
+                .flatMap(Collection::stream) // 扁平化文件元数据
+                .collect(Collectors.toList()); // 收集文件元数据
     }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws IOException {
+        // 空实现，用于关闭资源（如果有需要）。
+    }
 }
