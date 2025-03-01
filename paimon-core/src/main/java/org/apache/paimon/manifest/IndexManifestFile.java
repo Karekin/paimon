@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 
 import java.util.List;
 
-/** Index manifest file. */
+/** 索引清单文件。 */
 public class IndexManifestFile extends ObjectsFile<IndexManifestEntry> {
 
     private IndexManifestFile(
@@ -57,7 +57,7 @@ public class IndexManifestFile extends ObjectsFile<IndexManifestEntry> {
                 cache);
     }
 
-    /** Write new index files to index manifest. */
+    /** 写入新的索引文件到索引清单。 */
     @Nullable
     public String writeIndexFiles(
             @Nullable String previousIndexManifest,
@@ -70,14 +70,14 @@ public class IndexManifestFile extends ObjectsFile<IndexManifestEntry> {
         return handler.write(previousIndexManifest, newIndexFiles);
     }
 
-    /** Creator of {@link IndexManifestFile}. */
+    /** 创建 {@link IndexManifestFile} 的工厂类。 */
     public static class Factory {
 
-        private final FileIO fileIO;
-        private final FileFormat fileFormat;
-        private final String compression;
-        private final FileStorePathFactory pathFactory;
-        @Nullable private final SegmentsCache<Path> cache;
+        private final FileIO fileIO; // 文件输入输出对象
+        private final FileFormat fileFormat; // 文件格式
+        private final String compression; // 压缩方式
+        private final FileStorePathFactory pathFactory; // 路径工厂
+        @Nullable private final SegmentsCache<Path> cache; // 缓存
 
         public Factory(
                 FileIO fileIO,
@@ -92,6 +92,10 @@ public class IndexManifestFile extends ObjectsFile<IndexManifestEntry> {
             this.cache = cache;
         }
 
+        /**
+         * 创建一个新的 {@link IndexManifestFile} 实例。
+         * @return {@link IndexManifestFile} 实例
+         */
         public IndexManifestFile create() {
             RowType schema = VersionedObjectSerializer.versionType(IndexManifestEntry.SCHEMA);
             return new IndexManifestFile(

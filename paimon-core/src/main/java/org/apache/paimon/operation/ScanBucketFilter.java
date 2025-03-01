@@ -46,29 +46,55 @@ import java.util.stream.Collectors;
 import static org.apache.paimon.predicate.PredicateBuilder.splitAnd;
 import static org.apache.paimon.predicate.PredicateBuilder.splitOr;
 
-/** Bucket filter push down in scan to skip files. */
+/**
+ * 扫描时的桶过滤器，用于跳过不需要的文件。
+ */
 public abstract class ScanBucketFilter {
 
-    public static final int MAX_VALUES = 1000;
+    public static final int MAX_VALUES = 1000; // 最大值数目
 
-    private final RowType bucketKeyType;
+    private final RowType bucketKeyType; // 桶键类型
 
-    private ScanBucketSelector selector;
+    private ScanBucketSelector selector; // 桶选择器
 
+    /**
+     * 构造函数，初始化桶过滤器。
+     * @param bucketKeyType 桶键类型
+     */
     public ScanBucketFilter(RowType bucketKeyType) {
         this.bucketKeyType = bucketKeyType;
     }
 
+    /**
+     * 将谓词下推到扫描中。
+     * @param predicate 谓词
+     */
     public abstract void pushdown(Predicate predicate);
 
+    /**
+     * 设置桶键过滤器。
+     * @param predicate 谓词
+     */
     public void setBucketKeyFilter(Predicate predicate) {
         this.selector = create(predicate, bucketKeyType).orElse(null);
     }
 
+    /**
+     * 判断是否选择指定的桶。
+     * @param bucket 桶号
+     * @param numBucket 总桶数
+     * @return 是否选择
+     */
     public boolean select(int bucket, int numBucket) {
         return selector == null || selector.select(bucket, numBucket);
     }
 
+    /**
+     * 根据谓词和桶键类型创建扫描桶选择器。
+     * @param bucketPredicate 谓词
+     * @param bucketKeyType 桶键类型
+     * @return 扫描桶选择器的可选值
+     */
     @VisibleForTesting
     static Optional<ScanBucketSelector> create(Predicate bucketPredicate, RowType bucketKeyType) {
         @SuppressWarnings("unchecked")
@@ -94,12 +120,12 @@ public abstract class ScanBucketFilter {
                     }
                 }
 
-                // failed, go to next predicate
+                // 跳出循环，继续下一个谓词
                 continue nextAnd;
             }
             if (reference != null) {
                 if (bucketValues[reference] != null) {
-                    // Repeated equals in And?
+                    // And 中重复的相等条件
                     return Optional.empty();
                 }
 
@@ -144,7 +170,7 @@ public abstract class ScanBucketFilter {
         for (Object value : columnValues) {
             stack.add(value);
             if (columnIndex == rowValues.length - 1) {
-                // last column, consume row
+                // 最后一列，处理行
                 consumer.accept(stack);
             } else {
                 assembleRows(rowValues, consumer, stack, columnIndex + 1);
@@ -153,11 +179,13 @@ public abstract class ScanBucketFilter {
         }
     }
 
-    /** Selector to select bucket from {@link Predicate}. */
+    /**
+     * 选择桶的选择器。
+     */
     @ThreadSafe
     public static class ScanBucketSelector {
 
-        private final int[] hashCodes;
+        private final int[] hashCodes; // 哈希码数组
 
         private final Map<Integer, Set<Integer>> buckets = new ConcurrentHashMap<>();
 
@@ -165,6 +193,12 @@ public abstract class ScanBucketFilter {
             this.hashCodes = hashCodes;
         }
 
+        /**
+         * 判断是否选择指定的桶。
+         * @param bucket 桶号
+         * @param numBucket 总桶数
+         * @return 是否选择
+         */
         @VisibleForTesting
         boolean select(int bucket, int numBucket) {
             return buckets.computeIfAbsent(numBucket, k -> createBucketSet(numBucket))

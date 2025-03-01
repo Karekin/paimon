@@ -38,73 +38,72 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/** Read splits from specified {@link Snapshot} with given configuration. */
+/** 从指定的 {@link Snapshot} 中根据给定的配置读取分割块。 */
 public interface SnapshotReader {
 
-    SnapshotManager snapshotManager();
+    SnapshotManager snapshotManager(); // 获取快照管理器对象
 
-    ConsumerManager consumerManager();
+    ConsumerManager consumerManager(); // 获取消费者管理器对象
 
-    SplitGenerator splitGenerator();
+    SplitGenerator splitGenerator(); // 获取分割块生成器对象
 
-    SnapshotReader withSnapshot(long snapshotId);
+    SnapshotReader withSnapshot(long snapshotId); // 指定要读取的快照 ID
 
-    SnapshotReader withSnapshot(Snapshot snapshot);
+    SnapshotReader withSnapshot(Snapshot snapshot); // 指定要读取的快照对象
 
-    SnapshotReader withFilter(Predicate predicate);
+    SnapshotReader withFilter(Predicate predicate); // 设置行过滤器，过滤不符合条件的行
 
-    SnapshotReader withPartitionFilter(Map<String, String> partitionSpec);
+    SnapshotReader withPartitionFilter(Map<String, String> partitionSpec); // 设置分区过滤器，过滤不符合条件的分区
 
-    SnapshotReader withPartitionFilter(Predicate predicate);
+    SnapshotReader withPartitionFilter(Predicate predicate); // 设置分区过滤器，过滤不符合条件的分区
 
-    SnapshotReader withPartitionFilter(List<BinaryRow> partitions);
+    SnapshotReader withPartitionFilter(List<BinaryRow> partitions); // 设置分区过滤器，过滤指定分区外的数据
 
-    SnapshotReader withMode(ScanMode scanMode);
+    SnapshotReader withMode(ScanMode scanMode); // 设置扫描模式，如 ALL、APPEND、CHANGELOG 等
 
-    SnapshotReader withLevelFilter(Filter<Integer> levelFilter);
+    SnapshotReader withLevelFilter(Filter<Integer> levelFilter); // 设置层级过滤器，过滤不符合条件的层级
 
-    SnapshotReader withManifestEntryFilter(Filter<ManifestEntry> filter);
+    SnapshotReader withManifestEntryFilter(Filter<ManifestEntry> filter); // 设置清单入口过滤器，过滤不符合条件的清单入口
 
-    SnapshotReader withBucket(int bucket);
+    SnapshotReader withBucket(int bucket); // 设置要读取的桶号
 
-    SnapshotReader withBucketFilter(Filter<Integer> bucketFilter);
+    SnapshotReader withBucketFilter(Filter<Integer> bucketFilter); // 设置桶过滤器，过滤不符合条件的桶
 
-    SnapshotReader withDataFileNameFilter(Filter<String> fileNameFilter);
+    SnapshotReader withDataFileNameFilter(Filter<String> fileNameFilter); // 设置数据文件名过滤器，过滤不符合条件的文件名
 
-    SnapshotReader withShard(int indexOfThisSubtask, int numberOfParallelSubtasks);
+    SnapshotReader withShard(int indexOfThisSubtask, int numberOfParallelSubtasks); // 设置分片，用于并行读取
 
-    SnapshotReader withMetricRegistry(MetricRegistry registry);
+    SnapshotReader withMetricRegistry(MetricRegistry registry); // 设置度量注册表，用于记录读取指标
 
-    /** Get splits plan from snapshot. */
+    /** 从快照中获取分割块计划。 */
     Plan read();
 
-    /** Get splits plan from file changes. */
+    /** 从文件变更中获取分割块计划。 */
     Plan readChanges();
 
-    Plan readIncrementalDiff(Snapshot before);
+    Plan readIncrementalDiff(Snapshot before); // 读取快照变化，获取增量变化
 
-    /** List partitions. */
+    /** 列出分区。 */
     List<BinaryRow> partitions();
 
-    List<PartitionEntry> partitionEntries();
+    List<PartitionEntry> partitionEntries(); // 列出分区入口
 
-    /** Result plan of this scan. */
+    /** 扫描的结果计划。 */
     interface Plan extends TableScan.Plan {
 
         @Nullable
-        Long watermark();
+        Long watermark(); // 获取水印时间
 
         /**
-         * Snapshot id of this plan, return null if the table is empty or the manifest list is
-         * specified.
+         * 此计划的快照 ID，如果表为空或指定了清单列表，则返回 null。
          */
         @Nullable
         Long snapshotId();
 
-        /** Result splits. */
+        /** 结果分割块列表。 */
         List<Split> splits();
 
-        default List<DataSplit> dataSplits() {
+        default List<DataSplit> dataSplits() { // 获取数据分割块列表
             return (List) splits();
         }
     }

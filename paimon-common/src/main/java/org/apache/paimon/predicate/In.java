@@ -25,26 +25,29 @@ import java.util.Optional;
 
 import static org.apache.paimon.predicate.CompareUtils.compareLiteral;
 
-/** A {@link LeafFunction} to eval in. */
+/**
+ * 一种 {@link LeafFunction} 的实现，用于评估“IN”条件。
+ */
 public class In extends LeafFunction {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L; // 用于序列化版本控制
 
-    public static final In INSTANCE = new In();
+    public static final In INSTANCE = new In(); // 单例实例，确保只有一个 In 对象
 
-    private In() {}
+    private In() {} // 私有构造函数，防止外部实例化
 
     @Override
     public boolean test(DataType type, Object field, List<Object> literals) {
+        // 判断字段是否在 literals 列表中
         if (field == null) {
-            return false;
+            return false; // 如果字段为空，直接返回 false
         }
-        for (Object literal : literals) {
+        for (Object literal : literals) { // 遍历 literals 列表
             if (literal != null && compareLiteral(type, literal, field) == 0) {
-                return true;
+                return true; // 如果匹配，返回 true
             }
         }
-        return false;
+        return false; // 未匹配，返回 false
     }
 
     @Override
@@ -55,26 +58,29 @@ public class In extends LeafFunction {
             Object max,
             Long nullCount,
             List<Object> literals) {
+        // 判断在统计信息下的字段是否在 literals 列表中
         if (nullCount != null && rowCount == nullCount) {
-            return false;
+            return false; // 如果所有行都是 null，返回 false
         }
-        for (Object literal : literals) {
+        for (Object literal : literals) { // 遍历 literals 列表
             if (literal != null
                     && compareLiteral(type, literal, min) >= 0
                     && compareLiteral(type, literal, max) <= 0) {
-                return true;
+                return true; // 如果在范围内的匹配，返回 true
             }
         }
-        return false;
+        return false; // 未匹配，返回 false
     }
 
     @Override
     public Optional<LeafFunction> negate() {
+        // 返回“NOT IN”的相反条件
         return Optional.of(NotIn.INSTANCE);
     }
 
     @Override
     public <T> T visit(FunctionVisitor<T> visitor, FieldRef fieldRef, List<Object> literals) {
-        return visitor.visitIn(fieldRef, literals);
+        // 访问“IN”条件
+        return visitor.visitIn(fieldRef, literals); // 调用访问者的“IN”方法
     }
 }

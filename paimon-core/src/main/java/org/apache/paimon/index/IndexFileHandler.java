@@ -49,14 +49,14 @@ import static org.apache.paimon.index.HashIndexFile.HASH_INDEX;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 import static org.apache.paimon.utils.Preconditions.checkNotNull;
 
-/** Handle index files. */
+/** 处理索引文件。 */
 public class IndexFileHandler {
 
-    private final SnapshotManager snapshotManager;
-    private final PathFactory pathFactory;
-    private final IndexManifestFile indexManifestFile;
-    private final HashIndexFile hashIndex;
-    private final DeletionVectorsIndexFile deletionVectorsIndex;
+    private final SnapshotManager snapshotManager; // 快照管理器
+    private final PathFactory pathFactory; // 路径工厂
+    private final IndexManifestFile indexManifestFile; // 索引清单文件
+    private final HashIndexFile hashIndex; // 哈希索引文件
+    private final DeletionVectorsIndexFile deletionVectorsIndex; // 删除向量索引文件
 
     public IndexFileHandler(
             SnapshotManager snapshotManager,
@@ -75,15 +75,30 @@ public class IndexFileHandler {
         return this.deletionVectorsIndex;
     }
 
-    public Optional<IndexFileMeta> scanHashIndex(long snapshotId, BinaryRow partition, int bucket) {
+    /**
+     * 扫描哈希索引文件。
+     * @param snapshotId 快照 ID
+     * @param partition 分区
+     * @param bucket 桶号
+     * @return 包含哈希索引文件元数据的 Optional 或空 Optional
+     */
+    public Optional<IndexFileMeta> scanHashIndex(
+            long snapshotId, BinaryRow partition, int bucket) {
         List<IndexFileMeta> result = scan(snapshotId, HASH_INDEX, partition, bucket);
         if (result.size() > 1) {
             throw new IllegalArgumentException(
-                    "Find multiple hash index files for one bucket: " + result);
+                    "发现多个桶的哈希索引文件: " + result);
         }
         return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
+    /**
+     * 扫描删除向量索引文件。
+     * @param snapshotId 快照 ID
+     * @param partition 分区
+     * @param bucket 桶号
+     * @return 数据文件与删除文件的映射表
+     */
     public Map<String, DeletionFile> scanDVIndex(
             @Nullable Long snapshotId, BinaryRow partition, int bucket) {
         if (snapshotId == null) {
@@ -115,6 +130,11 @@ public class IndexFileHandler {
         return result;
     }
 
+    /**
+     * 扫描索引文件清单。
+     * @param indexType 索引类型
+     * @return 符合条件的清单条目列表
+     */
     public List<IndexManifestEntry> scan(String indexType) {
         Snapshot snapshot = snapshotManager.latestSnapshot();
         if (snapshot == null) {
@@ -134,6 +154,14 @@ public class IndexFileHandler {
         return result;
     }
 
+    /**
+     * 扫描指定快照、索引类型、分区和桶号的索引文件元数据。
+     * @param snapshotId 快照 ID
+     * @param indexType 索引类型
+     * @param partition 分区
+     * @param bucket 桶号
+     * @return 符合条件的索引文件元数据列表
+     */
     public List<IndexFileMeta> scan(
             long snapshotId, String indexType, BinaryRow partition, int bucket) {
         List<IndexFileMeta> result = new ArrayList<>();
@@ -145,11 +173,25 @@ public class IndexFileHandler {
         return result;
     }
 
+    /**
+     * 扫描指定快照、索引类型和分区的索引文件元数据，并按分区和桶号分组。
+     * @param snapshot 快照 ID
+     * @param indexType 索引类型
+     * @param partitions 分区集合
+     * @return 按分区和桶号分组的索引文件元数据映射表
+     */
     public Map<Pair<BinaryRow, Integer>, List<IndexFileMeta>> scan(
             long snapshot, String indexType, Set<BinaryRow> partitions) {
         return scan(snapshotManager.snapshot(snapshot), indexType, partitions);
     }
 
+    /**
+     * 扫描指定快照、索引类型和分区的索引文件元数据，并按分区和桶号分组。
+     * @param snapshot 快照
+     * @param indexType 索引类型
+     * @param partitions 分区集合
+     * @return 按分区和桶号分组的索引文件元数据映射表
+     */
     public Map<Pair<BinaryRow, Integer>, List<IndexFileMeta>> scan(
             Snapshot snapshot, String indexType, Set<BinaryRow> partitions) {
         Map<Pair<BinaryRow, Integer>, List<IndexFileMeta>> result = new HashMap<>();
@@ -160,6 +202,10 @@ public class IndexFileHandler {
         return result;
     }
 
+    /**
+     * 扫描所有索引文件清单条目。
+     * @return 清单条目列表
+     */
     public List<IndexManifestEntry> scanEntries() {
         Snapshot snapshot = snapshotManager.latestSnapshot();
         if (snapshot == null || snapshot.indexManifest() == null) {
@@ -169,7 +215,14 @@ public class IndexFileHandler {
         return indexManifestFile.read(snapshot.indexManifest());
     }
 
-    public List<IndexManifestEntry> scanEntries(String indexType, BinaryRow partition) {
+    /**
+     * 扫描指定索引类型和分区的索引文件清单条目。
+     * @param indexType 索引类型
+     * @param partition 分区
+     * @return 符合条件的清单条目列表
+     */
+    public List<IndexManifestEntry> scanEntries(
+            String indexType, BinaryRow partition) {
         Long snapshot = snapshotManager.latestSnapshotId();
         if (snapshot == null) {
             return Collections.emptyList();
@@ -178,16 +231,37 @@ public class IndexFileHandler {
         return scanEntries(snapshot, indexType, partition);
     }
 
+    /**
+     * 扫描指定快照 ID、索引类型和分区的索引文件清单条目。
+     * @param snapshotId 快照 ID
+     * @param indexType 索引类型
+     * @param partition 分区
+     * @return 符合条件的清单条目列表
+     */
     public List<IndexManifestEntry> scanEntries(
             long snapshotId, String indexType, BinaryRow partition) {
         return scanEntries(snapshotId, indexType, Collections.singleton(partition));
     }
 
+    /**
+     * 扫描指定快照 ID、索引类型和分区集合的索引文件清单条目。
+     * @param snapshot 快照 ID
+     * @param indexType 索引类型
+     * @param partitions 分区集合
+     * @return 符合条件的清单条目列表
+     */
     public List<IndexManifestEntry> scanEntries(
             long snapshot, String indexType, Set<BinaryRow> partitions) {
         return scanEntries(snapshotManager.snapshot(snapshot), indexType, partitions);
     }
 
+    /**
+     * 扫描指定快照、索引类型和分区集合的索引文件清单条目。
+     * @param snapshot 快照
+     * @param indexType 索引类型
+     * @param partitions 分区集合
+     * @return 符合条件的清单条目列表
+     */
     public List<IndexManifestEntry> scanEntries(
             Snapshot snapshot, String indexType, Set<BinaryRow> partitions) {
         String indexManifest = snapshot.indexManifest();
@@ -205,17 +279,32 @@ public class IndexFileHandler {
         return result;
     }
 
+    /**
+     * 根据文件元数据构造路径对象。
+     * @param file 文件元数据
+     * @return 路径对象
+     */
     public Path filePath(IndexFileMeta file) {
         return pathFactory.toPath(file.fileName());
     }
 
+    /**
+     * 读取哈希索引文件的内容并转换为整型列表。
+     * @param file 文件元数据
+     * @return 哈希索引整型列表
+     */
     public List<Integer> readHashIndexList(IndexFileMeta file) {
         return IntIterator.toIntList(readHashIndex(file));
     }
 
+    /**
+     * 读取哈希索引文件的整型迭代器。
+     * @param file 文件元数据
+     * @return 哈希索引整型迭代器
+     */
     public IntIterator readHashIndex(IndexFileMeta file) {
         if (!file.indexType().equals(HASH_INDEX)) {
-            throw new IllegalArgumentException("Input file is not hash index: " + file.indexType());
+            throw new IllegalArgumentException("输入文件不是哈希索引: " + file.indexType());
         }
 
         try {
@@ -225,10 +314,21 @@ public class IndexFileHandler {
         }
     }
 
+    /**
+     * 写入哈希索引文件（使用 int 数组）。
+     * @param ints 整型数组
+     * @return 文件元数据
+     */
     public IndexFileMeta writeHashIndex(int[] ints) {
         return writeHashIndex(ints.length, IntIterator.create(ints));
     }
 
+    /**
+     * 写入哈希索引文件。
+     * @param size 大小
+     * @param iterator 整型迭代器
+     * @return 文件元数据
+     */
     public IndexFileMeta writeHashIndex(int size, IntIterator iterator) {
         String file;
         try {
@@ -239,19 +339,40 @@ public class IndexFileHandler {
         return new IndexFileMeta(HASH_INDEX, file, hashIndex.fileSize(file), size);
     }
 
+    /**
+     * 检查索引清单文件是否存在。
+     * @param indexManifest 清单文件名
+     * @return 是否存在
+     */
     public boolean existsManifest(String indexManifest) {
         return indexManifestFile.exists(indexManifest);
     }
 
+    /**
+     * 读取索引清单文件的内容。
+     * @param indexManifest 清单文件名
+     * @return 清单条目列表
+     */
     public List<IndexManifestEntry> readManifest(String indexManifest) {
         return indexManifestFile.read(indexManifest);
     }
 
+    /**
+     * 读取索引清单文件的内容（可能抛出 IOException）。
+     * @param indexManifest 清单文件名
+     * @return 清单条目列表
+     * @throws IOException 如果发生 I/O 错误
+     */
     public List<IndexManifestEntry> readManifestWithIOException(String indexManifest)
             throws IOException {
         return indexManifestFile.readWithIOException(indexManifest);
     }
 
+    /**
+     * 根据文件元数据返回对应的索引文件对象。
+     * @param file 文件元数据
+     * @return 索引文件对象
+     */
     private IndexFile indexFile(IndexFileMeta file) {
         switch (file.indexType()) {
             case HASH_INDEX:
@@ -259,35 +380,62 @@ public class IndexFileHandler {
             case DELETION_VECTORS_INDEX:
                 return deletionVectorsIndex;
             default:
-                throw new IllegalArgumentException("Unknown index type: " + file.indexType());
+                throw new IllegalArgumentException("未知的索引类型: " + file.indexType());
         }
     }
 
+    /**
+     * 检查索引文件是否存在。
+     * @param file 清单条目
+     * @return 是否存在
+     */
     public boolean existsIndexFile(IndexManifestEntry file) {
         return indexFile(file.indexFile()).exists(file.indexFile().fileName());
     }
 
+    /**
+     * 删除索引文件（通过清单条目）。
+     * @param file 清单条目
+     */
     public void deleteIndexFile(IndexManifestEntry file) {
         deleteIndexFile(file.indexFile());
     }
 
+    /**
+     * 删除索引文件。
+     * @param file 文件元数据
+     */
     public void deleteIndexFile(IndexFileMeta file) {
         indexFile(file).delete(file.fileName());
     }
 
+    /**
+     * 删除索引清单文件。
+     * @param indexManifest 清单文件名
+     */
     public void deleteManifest(String indexManifest) {
         indexManifestFile.delete(indexManifest);
     }
 
+    /**
+     * 读取所有删除向量索引文件。
+     * @param fileMetas 文件元数据列表
+     * @return 数据文件与删除向量的映射表
+     */
     public Map<String, DeletionVector> readAllDeletionVectors(List<IndexFileMeta> fileMetas) {
         for (IndexFileMeta indexFile : fileMetas) {
             checkArgument(
                     indexFile.indexType().equals(DELETION_VECTORS_INDEX),
-                    "Input file is not deletion vectors index " + indexFile.indexType());
+                    "输入文件不是删除向量索引 " + indexFile.indexType());
         }
         return deletionVectorsIndex.readAllDeletionVectors(fileMetas);
     }
 
+    /**
+     * 写入删除向量索引文件。
+     * @param deletionVectors 删除向量映射表
+     * @return 文件元数据列表
+     */
     public List<IndexFileMeta> writeDeletionVectorsIndex(
             Map<String, DeletionVector> deletionVectors) {
         return deletionVectorsIndex.write(deletionVectors);

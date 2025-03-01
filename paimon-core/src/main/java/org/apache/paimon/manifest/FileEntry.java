@@ -32,36 +32,38 @@ import java.util.Objects;
 
 import static org.apache.paimon.utils.ManifestReadThreadPool.sequentialBatchedExecute;
 
-/** Entry representing a file. */
+
+/**
+ * 表示文件的条目。
+ */
 public interface FileEntry {
 
-    FileKind kind();
+    FileKind kind(); // 获取文件类型
 
-    BinaryRow partition();
+    BinaryRow partition(); // 获取分区信息
 
-    int bucket();
+    int bucket(); // 获取桶号
 
-    int level();
+    int level(); // 获取文件层级
 
-    String fileName();
+    String fileName(); // 获取文件名
 
-    Identifier identifier();
+    Identifier identifier(); // 获取文件的唯一标识符
 
-    BinaryRow minKey();
+    BinaryRow minKey(); // 获取文件的最小键值
 
-    BinaryRow maxKey();
+    BinaryRow maxKey(); // 获取文件的最大键值
 
     /**
-     * The same {@link Identifier} indicates that the {@link ManifestEntry} refers to the same data
-     * file.
+     * 表示文件的唯一标识符。
      */
     class Identifier {
-        public final BinaryRow partition;
-        public final int bucket;
-        public final int level;
-        public final String fileName;
+        public final BinaryRow partition; // 分区信息
+        public final int bucket; // 桶号
+        public final int level; // 文件层级
+        public final String fileName; // 文件名
 
-        /* Cache the hash code for the string */
+        /* 为字符串缓存哈希码 */
         private Integer hash;
 
         public Identifier(BinaryRow partition, int bucket, int level, String fileName) {
@@ -129,16 +131,14 @@ public interface FileEntry {
                 case ADD:
                     Preconditions.checkState(
                             !map.containsKey(identifier),
-                            "Trying to add file %s which is already added.",
+                            "尝试添加的文件 %s 已经存在。",
                             identifier);
                     map.put(identifier, entry);
                     break;
                 case DELETE:
-                    // each dataFile will only be added once and deleted once,
-                    // if we know that it is added before then both add and delete entry can be
-                    // removed because there won't be further operations on this file,
-                    // otherwise we have to keep the delete entry because the add entry must be
-                    // in the previous manifest files
+                    // 每个数据文件只能添加一次和删除一次，
+                    // 如果我们确定它在之前已经被添加，则可以同时删除两个条目，因为不会再对这个文件进行进一步的操作，
+                    // 否则，我们必须保留删除条目，因为添加条目必须存在于之前的清单文件中
                     if (map.containsKey(identifier)) {
                         map.remove(identifier);
                     } else {
@@ -147,7 +147,7 @@ public interface FileEntry {
                     break;
                 default:
                     throw new UnsupportedOperationException(
-                            "Unknown value kind " + entry.kind().name());
+                            "不支持的文件类型" + entry.kind().name());
             }
         }
     }

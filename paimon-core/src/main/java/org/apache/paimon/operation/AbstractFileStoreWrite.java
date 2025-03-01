@@ -451,9 +451,6 @@ public abstract class AbstractFileStoreWrite<T> implements FileStoreWrite<T> {
     }
 
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
     * 创建WriterContainer，包含写入器、索引维护器和删除向量维护器
     */
     @VisibleForTesting

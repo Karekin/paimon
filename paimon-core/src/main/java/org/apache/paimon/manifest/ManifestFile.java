@@ -42,28 +42,27 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * This file includes several {@link ManifestEntry}s, representing the additional changes since last
- * snapshot.
+ * 该文件包含多个 {@link ManifestEntry}，表示自上次快照以来的额外更改。
  */
 public class ManifestFile extends ObjectsFile<ManifestEntry> {
 
-    private final SchemaManager schemaManager;
-    private final RowType partitionType;
-    private final FormatWriterFactory writerFactory;
-    private final long suggestedFileSize;
+    private final SchemaManager schemaManager; // 模式管理器
+    private final RowType partitionType; // 分区类型
+    private final FormatWriterFactory writerFactory; // 写文件格式工厂
+    private final long suggestedFileSize; // 建议的文件大小
 
     private ManifestFile(
-            FileIO fileIO,
-            SchemaManager schemaManager,
-            RowType partitionType,
-            ManifestEntrySerializer serializer,
-            RowType schema,
-            FormatReaderFactory readerFactory,
-            FormatWriterFactory writerFactory,
-            String compression,
-            PathFactory pathFactory,
-            long suggestedFileSize,
-            @Nullable SegmentsCache<Path> cache) {
+            FileIO fileIO, // 文件输入输出对象
+            SchemaManager schemaManager, // 模式管理器
+            RowType partitionType, // 分区类型
+            ManifestEntrySerializer serializer, // ManifestEntry 序列化器
+            RowType schema, // 模式
+            FormatReaderFactory readerFactory, // 文件读取格式工厂
+            FormatWriterFactory writerFactory, // 文件写入格式工厂
+            String compression, // 压缩方式
+            PathFactory pathFactory, // 路径工厂
+            long suggestedFileSize, // 建议的文件大小
+            @Nullable SegmentsCache<Path> cache) { // 文件缓存
         super(
                 fileIO,
                 serializer,
@@ -79,25 +78,25 @@ public class ManifestFile extends ObjectsFile<ManifestEntry> {
         this.suggestedFileSize = suggestedFileSize;
     }
 
-    @VisibleForTesting
+    @VisibleForTesting // 用于测试
     public long suggestedFileSize() {
         return suggestedFileSize;
     }
 
     /**
-     * Write several {@link ManifestEntry}s into manifest files.
+     * 将多个 {@link ManifestEntry} 写入清单文件。
      *
-     * <p>NOTE: This method is atomic.
+     * <p>注意：该方法是原子性的。
      */
     public List<ManifestFileMeta> write(List<ManifestEntry> entries) {
         RollingFileWriter<ManifestEntry, ManifestFileMeta> writer = createRollingWriter();
         try {
-            writer.write(entries);
-            writer.close();
+            writer.write(entries); // 写入数据
+            writer.close(); // 关闭写入器
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(e); // 捕获并抛出异常
         }
-        return writer.result();
+        return writer.result(); // 返回写入结果
     }
 
     public RollingFileWriter<ManifestEntry, ManifestFileMeta> createRollingWriter() {
@@ -108,12 +107,12 @@ public class ManifestFile extends ObjectsFile<ManifestEntry> {
 
     private class ManifestEntryWriter extends SingleFileWriter<ManifestEntry, ManifestFileMeta> {
 
-        private final SimpleStatsCollector partitionStatsCollector;
-        private final SimpleStatsConverter partitionStatsSerializer;
+        private final SimpleStatsCollector partitionStatsCollector; // 分区统计收集器
+        private final SimpleStatsConverter partitionStatsSerializer; // 分区统计序列化器
 
-        private long numAddedFiles = 0;
-        private long numDeletedFiles = 0;
-        private long schemaId = Long.MIN_VALUE;
+        private long numAddedFiles = 0; // 新增文件数量
+        private long numDeletedFiles = 0; // 删除文件数量
+        private long schemaId = Long.MIN_VALUE; // 模式 ID
 
         ManifestEntryWriter(FormatWriterFactory factory, Path path, String fileCompression) {
             super(
@@ -130,9 +129,9 @@ public class ManifestFile extends ObjectsFile<ManifestEntry> {
 
         @Override
         public void write(ManifestEntry entry) throws IOException {
-            super.write(entry);
+            super.write(entry); // 调用父类的写入方法
 
-            switch (entry.kind()) {
+            switch (entry.kind()) { // 根据 ManifestEntry 的类型进行统计
                 case ADD:
                     numAddedFiles++;
                     break;
@@ -142,36 +141,36 @@ public class ManifestFile extends ObjectsFile<ManifestEntry> {
                 default:
                     throw new UnsupportedOperationException("Unknown entry kind: " + entry.kind());
             }
-            schemaId = Math.max(schemaId, entry.file().schemaId());
+            schemaId = Math.max(schemaId, entry.file().schemaId()); // 更新模式 ID
 
-            partitionStatsCollector.collect(entry.partition());
+            partitionStatsCollector.collect(entry.partition()); // 收集分区统计
         }
 
         @Override
         public ManifestFileMeta result() throws IOException {
             return new ManifestFileMeta(
-                    path.getName(),
-                    fileIO.getFileSize(path),
-                    numAddedFiles,
-                    numDeletedFiles,
-                    partitionStatsSerializer.toBinary(partitionStatsCollector.extract()),
-                    numAddedFiles + numDeletedFiles > 0
+                    path.getName(), // 文件名
+                    fileIO.getFileSize(path), // 文件大小
+                    numAddedFiles, // 新增文件数量
+                    numDeletedFiles, // 删除文件数量
+                    partitionStatsSerializer.toBinary(partitionStatsCollector.extract()), // 分区统计二进制
+                    numAddedFiles + numDeletedFiles > 0 // 选择模式 ID
                             ? schemaId
                             : schemaManager.latest().get().id());
         }
     }
 
-    /** Creator of {@link ManifestFile}. */
+    /** ManifestFile 的创建工厂。 */
     public static class Factory {
 
-        private final FileIO fileIO;
-        private final SchemaManager schemaManager;
-        private final RowType partitionType;
-        private final FileFormat fileFormat;
-        private final String compression;
-        private final FileStorePathFactory pathFactory;
-        private final long suggestedFileSize;
-        @Nullable private final SegmentsCache<Path> cache;
+        private final FileIO fileIO; // 文件输入输出对象
+        private final SchemaManager schemaManager; // 模式管理器
+        private final RowType partitionType; // 分区类型
+        private final FileFormat fileFormat; // 文件格式
+        private final String compression; // 压缩方式
+        private final FileStorePathFactory pathFactory; // 文件存储路径工厂
+        private final long suggestedFileSize; // 建议的文件大小
+        @Nullable private final SegmentsCache<Path> cache; // 文件缓存
 
         public Factory(
                 FileIO fileIO,
@@ -193,7 +192,7 @@ public class ManifestFile extends ObjectsFile<ManifestEntry> {
         }
 
         public boolean isCacheEnabled() {
-            return cache != null;
+            return cache != null; // 是否启用缓存
         }
 
         public ManifestFile create() {

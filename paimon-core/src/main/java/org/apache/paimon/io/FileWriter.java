@@ -25,38 +25,30 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * File writer to accept one record or a branch of records and generate metadata after closing it.
+ * 文件写入器，用于接受一条记录或记录的一个分支，并在关闭后生成元数据。
  *
- * @param <T> record type.
- * @param <R> file result to collect.
+ * @param <T> 记录类型。
+ * @param <R> 文件结果类型。
  */
-/**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* 文件写入器，用于接受一条记录或记录的一个分支，并在关闭后生成元数据。
-*/
 public interface FileWriter<T, R> extends Closeable {
 
     /**
-     * Add only one record to this file writer.
+     * 向此文件写入器中写入一条记录。
      *
-     * <p>NOTE: If any exception occurs during writing, the writer should clean up useless files for
-     * the user.
+     * <p>注意：如果在写入过程中发生异常，写入器应该为用户清理无用的文件。
      *
-     * @param record to write.
-     * @throws IOException if encounter any IO error.
+     * @param record 要写入的记录。
+     * @throws IOException 如果遇到任何 I/O 错误。
      */
     void write(T record) throws IOException;
 
     /**
-     * Add records from {@link Iterator} to this file writer.
+     * 从 {@link Iterator} 中向此文件写入器写入记录。
      *
-     * <p>NOTE: If any exception occurs during writing, the writer should clean up useless files for
-     * the user.
+     * <p>注意：如果在写入过程中发生异常，写入器应该为用户清理无用的文件。
      *
-     * @param records to write
-     * @throws IOException if encounter any IO error.
+     * @param records 要写入的记录。
+     * @throws IOException 如果遇到任何 I/O 错误。
      */
     default void write(Iterator<T> records) throws Exception {
         while (records.hasNext()) {
@@ -65,13 +57,12 @@ public interface FileWriter<T, R> extends Closeable {
     }
 
     /**
-     * Add records from {@link CloseableIterator} to this file writer.
+     * 从 {@link CloseableIterator} 中向此文件写入器写入记录。
      *
-     * <p>NOTE: If any exception occurs during writing, the writer should clean up useless files for
-     * the user.
+     * <p>注意：如果在写入过程中发生异常，写入器应该为用户清理无用的文件。
      *
-     * @param records to write
-     * @throws IOException if encounter any IO error.
+     * @param records 要写入的记录。
+     * @throws IOException 如果遇到任何 I/O 错误。
      */
     default void write(CloseableIterator<T> records) throws Exception {
         try {
@@ -84,13 +75,12 @@ public interface FileWriter<T, R> extends Closeable {
     }
 
     /**
-     * Add records from {@link Iterable} to file writer.
+     * 从 {@link Iterable} 中向文件写入器写入记录。
      *
-     * <p>NOTE: If any exception occurs during writing, the writer should clean up useless files for
-     * the user.
+     * <p>注意：如果在写入过程中发生异常，写入器应该为用户清理无用的文件。
      *
-     * @param records to write.
-     * @throws IOException if encounter any IO error.
+     * @param records 要写入的记录。
+     * @throws IOException 如果遇到任何 I/O 错误。
      */
     default void write(Iterable<T> records) throws IOException {
         for (T record : records) {
@@ -99,19 +89,19 @@ public interface FileWriter<T, R> extends Closeable {
     }
 
     /**
-     * The total written record count.
+     * 已写入的记录总数。
      *
-     * @return record count.
+     * @return 记录数量。
      */
     long recordCount();
 
     /**
-     * Abort to clear orphan file(s) if encounter any error.
+     * 中止写入以清理孤立文件，如果遇到任何错误。
      *
-     * <p>NOTE: This implementation must be reentrant.
+     * <p>注意：此实现必须是可重入的。
      */
     void abort();
 
-    /** @return the result for this closed file writer. */
+    /** @return 返回此已关闭文件写入器的结果。 */
     R result() throws IOException;
 }

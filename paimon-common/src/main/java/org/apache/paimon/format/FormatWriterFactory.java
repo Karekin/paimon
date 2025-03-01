@@ -22,16 +22,18 @@ import org.apache.paimon.fs.PositionOutputStream;
 
 import java.io.IOException;
 
-/** A factory to create {@link FormatWriter} for file. */
+/**
+ * 一个工厂接口，用于创建 {@link FormatWriter}。
+ */
 public interface FormatWriterFactory {
 
     /**
-     * Creates a writer that writes to the given stream.
+     * 创建一个写入器，将数据写入到指定的输出流中。
      *
-     * @param out The output stream to write the encoded data to.
-     * @param compression the compression value.
-     * @throws IOException Thrown if the writer cannot be opened, or if the output stream throws an
-     *     exception.
+     * @param out 输出流，用于写入编码后的数据。
+     * @param compression 压缩方式。
+     * @return 返回一个 {@link FormatWriter} 对象，用于写入数据。
+     * @throws IOException 如果写入器无法打开，或者输出流抛出异常。
      */
     FormatWriter create(PositionOutputStream out, String compression) throws IOException;
 }

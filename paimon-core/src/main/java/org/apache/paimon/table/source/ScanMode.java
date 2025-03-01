@@ -18,15 +18,17 @@
 
 package org.apache.paimon.table.source;
 
-/** Scan which part of the snapshot. */
+/**
+ * 指定要扫描快照的哪些部分。
+ */
 public enum ScanMode {
 
-    /** Scan complete data files of a snapshot. */
+    /** 扫描快照的所有数据文件。 */
     ALL,
 
-    /** Only scan newly changed files of a snapshot. */
+    /** 只扫描快照的新增或变化文件。 */
     DELTA,
 
-    /** Only scan changelog files of a snapshot. */
+    /** 只扫描快照的变更日志文件。 */
     CHANGELOG
 }

@@ -37,16 +37,22 @@ import static org.apache.paimon.CoreOptions.MergeEngine.FIRST_ROW;
 /** Merge tree implementation of {@link SplitGenerator}. */
 public class MergeTreeSplitGenerator implements SplitGenerator {
 
+    // 用于比较记录的比较器，通常用于按主键排序
     private final Comparator<InternalRow> keyComparator;
 
+    // 目标分裂大小，用于控制分裂的大小
     private final long targetSplitSize;
 
+    // 打开文件的成本，用于衡量打开文件的代价
     private final long openFileCost;
 
+    // 是否启用删除向量
     private final boolean deletionVectorsEnabled;
 
+    // 合并引擎类型，用于控制数据文件的合并逻辑
     private final MergeEngine mergeEngine;
 
+    // 构造函数，初始化分裂生成器的参数
     public MergeTreeSplitGenerator(
             Comparator<InternalRow> keyComparator,
             long targetSplitSize,
@@ -60,19 +66,24 @@ public class MergeTreeSplitGenerator implements SplitGenerator {
         this.mergeEngine = mergeEngine;
     }
 
+    // 判断是否始终可以转换为原始数据
     @Override
     public boolean alwaysRawConvertible() {
+        // 如果启用了删除向量，或者合并引擎是 FIRST_ROW，则可以转换为原始数据
         return deletionVectorsEnabled || mergeEngine == FIRST_ROW;
     }
 
+    // 为批量扫描生成数据分裂
     @Override
     public List<SplitGroup> splitForBatch(List<DataFileMeta> files) {
+        // 判断文件是否都可以不需要删除操作，并且所有文件的级别相同
         boolean rawConvertible =
                 files.stream().allMatch(file -> file.level() != 0 && withoutDeleteRow(file));
         boolean oneLevel =
                 files.stream().map(DataFileMeta::level).collect(Collectors.toSet()).size() == 1;
 
         if (rawConvertible && (deletionVectorsEnabled || mergeEngine == FIRST_ROW || oneLevel)) {
+            // 计算每个文件的权重
             Function<DataFileMeta, Long> weightFunc =
                     file -> Math.max(file.fileSize(), openFileCost);
             return BinPacking.packForOrdered(files, weightFunc, targetSplitSize).stream()
@@ -81,25 +92,9 @@ public class MergeTreeSplitGenerator implements SplitGenerator {
         }
 
         /*
-         * The generator aims to parallel the scan execution by slicing the files of each bucket
-         * into multiple splits. The generation has one constraint: files with intersected key
-         * ranges (within one section) must go to the same split. Therefore, the files are first to go
-         * through the interval partition algorithm to generate sections and then through the
-         * OrderedPack algorithm. Note that the item to be packed here is each section, the capacity
-         * is denoted as the targetSplitSize, and the final number of the bins is the number of
-         * splits generated.
-         *
-         * For instance, there are files: [1, 2] [3, 4] [5, 180] [5, 190] [200, 600] [210, 700]
-         * with targetSplitSize 128M. After interval partition, there are four sections:
-         * - section1: [1, 2]
-         * - section2: [3, 4]
-         * - section3: [5, 180], [5, 190]
-         * - section4: [200, 600], [210, 700]
-         *
-         * After OrderedPack, section1 and section2 will be put into one bin (split), so the final result will be:
-         * - split1: [1, 2] [3, 4]
-         * - split2: [5, 180] [5,190]
-         * - split3: [200, 600] [210, 700]
+         * 生成分裂的逻辑：
+         * 1. 将文件按照区间划分为多个分区，确保每个分区的文件区间不重叠
+         * 2. 使用有序装箱算法，将分区后的文件组打包成符合目标大小的分裂
          */
         List<List<DataFileMeta>> sections =
                 new IntervalPartition(files, keyComparator)
@@ -114,12 +109,14 @@ public class MergeTreeSplitGenerator implements SplitGenerator {
                 .collect(Collectors.toList());
     }
 
+    // 为流式扫描生成数据分裂
     @Override
     public List<SplitGroup> splitForStreaming(List<DataFileMeta> files) {
-        // We don't split streaming scan files
+        // 流式扫描不分裂，直接作为一个数据组返回
         return Collections.singletonList(SplitGroup.rawConvertibleGroup(files));
     }
 
+    // 打包分裂
     private List<List<DataFileMeta>> packSplits(List<List<DataFileMeta>> sections) {
         Function<List<DataFileMeta>, Long> weightFunc =
                 file -> Math.max(totalSize(file), openFileCost);
@@ -128,6 +125,7 @@ public class MergeTreeSplitGenerator implements SplitGenerator {
                 .collect(Collectors.toList());
     }
 
+    // 计算文件组的总大小
     private long totalSize(List<DataFileMeta> section) {
         long size = 0L;
         for (DataFileMeta file : section) {
@@ -136,20 +134,23 @@ public class MergeTreeSplitGenerator implements SplitGenerator {
         return size;
     }
 
+    // 将分区后的文件展平为一个列表
     private List<DataFileMeta> flatRun(List<SortedRun> section) {
         List<DataFileMeta> files = new ArrayList<>();
         section.forEach(run -> files.addAll(run.files()));
         return files;
     }
 
+    // 将多个文件组展平为一个文件列表
     private List<DataFileMeta> flatFiles(List<List<DataFileMeta>> section) {
         List<DataFileMeta> files = new ArrayList<>();
         section.forEach(files::addAll);
         return files;
     }
 
+    // 检查数据文件是否没有删除记录
     private boolean withoutDeleteRow(DataFileMeta dataFileMeta) {
-        // null to true to be compatible with old version
+        // 如果没有删除记录，返回 true；否则返回 false
         return dataFileMeta.deleteRowCount().map(count -> count == 0L).orElse(true);
     }
 }

@@ -33,7 +33,7 @@ import java.util.Objects;
 import static org.apache.paimon.utils.SerializationUtils.newBytesType;
 
 /**
- * Entry of a manifest file, representing an addition / deletion of a data file.
+ * 表示清单文件中的一个条目，代表对数据文件的添加或删除操作。
  *
  * @since 0.9.0
  */
@@ -50,12 +50,12 @@ public class ManifestEntry implements FileEntry {
                             new DataField(3, "_TOTAL_BUCKETS", new IntType(false)),
                             new DataField(4, "_FILE", DataFileMeta.SCHEMA)));
 
-    private final FileKind kind;
-    // for tables without partition this field should be a row with 0 columns (not null)
-    private final BinaryRow partition;
-    private final int bucket;
-    private final int totalBuckets;
-    private final DataFileMeta file;
+    private final FileKind kind; // 文件类型，如添加或删除
+    // 对于无分区的表，该字段应该是带有 0 列的行（非空）
+    private final BinaryRow partition; // 分区元数据
+    private final int bucket; // 桶编号
+    private final int totalBuckets; // 总桶数
+    private final DataFileMeta file; // 数据文件元数据
 
     public ManifestEntry(
             FileKind kind, BinaryRow partition, int bucket, int totalBuckets, DataFileMeta file) {

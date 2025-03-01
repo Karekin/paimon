@@ -39,17 +39,16 @@ import static org.apache.paimon.utils.BranchManager.branchPath;
 import static org.apache.paimon.utils.FileUtils.listOriginalVersionedFiles;
 import static org.apache.paimon.utils.FileUtils.listVersionedFileStatus;
 
-/** Manage consumer groups. */
+/** 管理消费者组。 */
 public class ConsumerManager implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String CONSUMER_PREFIX = "consumer-";
+    private static final String CONSUMER_PREFIX = "consumer-"; // 消费者文件前缀
 
-    private final FileIO fileIO;
-    private final Path tablePath;
-
-    private final String branch;
+    private final FileIO fileIO; // 文件输入输出对象
+    private final Path tablePath; // 表的根路径
+    private final String branch; // 分支名称
 
     public ConsumerManager(FileIO fileIO, Path tablePath) {
         this(fileIO, tablePath, DEFAULT_MAIN_BRANCH);
@@ -61,10 +60,20 @@ public class ConsumerManager implements Serializable {
         this.branch = StringUtils.isBlank(branchName) ? DEFAULT_MAIN_BRANCH : branchName;
     }
 
+    /**
+     * 获取指定消费者ID的消费者对象。
+     * @param consumerId 消费者ID
+     * @return 包含消费者对象的Optional
+     */
     public Optional<Consumer> consumer(String consumerId) {
         return Consumer.fromPath(fileIO, consumerPath(consumerId));
     }
 
+    /**
+     * 重置指定消费者的消费状态。
+     * @param consumerId 消费者ID
+     * @param consumer 消费者对象
+     */
     public void resetConsumer(String consumerId, Consumer consumer) {
         try {
             fileIO.overwriteFileUtf8(consumerPath(consumerId), consumer.toJson());
@@ -73,10 +82,18 @@ public class ConsumerManager implements Serializable {
         }
     }
 
+    /**
+     * 删除指定消费者。
+     * @param consumerId 消费者ID
+     */
     public void deleteConsumer(String consumerId) {
         fileIO.deleteQuietly(consumerPath(consumerId));
     }
 
+    /**
+     * 获取所有消费者中最小的下一个快照ID。
+     * @return 包含最小快照ID的OptionalLong
+     */
     public OptionalLong minNextSnapshot() {
         try {
             return listOriginalVersionedFiles(fileIO, consumerDirectory(), CONSUMER_PREFIX)
@@ -90,6 +107,10 @@ public class ConsumerManager implements Serializable {
         }
     }
 
+    /**
+     * 清理过期的消费者。
+     * @param expireDateTime 过期时间
+     */
     public void expire(LocalDateTime expireDateTime) {
         try {
             listVersionedFileStatus(fileIO, consumerDirectory(), CONSUMER_PREFIX)
@@ -106,7 +127,7 @@ public class ConsumerManager implements Serializable {
         }
     }
 
-    /** Get all consumer. */
+    /** 获取所有消费者。 */
     public Map<String, Long> consumers() throws IOException {
         Map<String, Long> consumers = new HashMap<>();
         listOriginalVersionedFiles(fileIO, consumerDirectory(), CONSUMER_PREFIX)
@@ -118,7 +139,7 @@ public class ConsumerManager implements Serializable {
         return consumers;
     }
 
-    /** List all consumer IDs. */
+    /** 列出所有消费者ID。 */
     public List<String> listAllIds() {
         try {
             return listOriginalVersionedFiles(fileIO, consumerDirectory(), CONSUMER_PREFIX)

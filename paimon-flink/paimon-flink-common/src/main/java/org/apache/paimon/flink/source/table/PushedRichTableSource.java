@@ -27,39 +27,50 @@ import org.apache.flink.table.expressions.ResolvedExpression;
 
 import java.util.List;
 
-/** A {@link RichTableSource} with push down. */
+/**
+ * 一个具有下推功能的 RichTableSource。
+ * 该类继承自 `RichTableSource`，并实现了过滤下推、投影下推和限制下推的功能。
+ */
 public class PushedRichTableSource extends RichTableSource
         implements SupportsFilterPushDown, SupportsProjectionPushDown, SupportsLimitPushDown {
 
-    private final FlinkTableSource source;
+    private final FlinkTableSource source; // 表源实例，用于实际的数据读取和处理
 
     public PushedRichTableSource(FlinkTableSource source) {
         super(source);
-        this.source = source;
+        this.source = source; // 初始化表源实例
     }
 
     @Override
     public PushedRichTableSource copy() {
+        // 创建一个副本，确保每个实例独立
         return new PushedRichTableSource(source.copy());
     }
 
     @Override
     public Result applyFilters(List<ResolvedExpression> filters) {
-        return Result.of(filters, source.pushFilters(filters));
+        // 应用过滤下推逻辑
+        return Result.of(
+                filters, // 剩余的过滤条件
+                source.pushFilters(filters) // 下推过滤条件到表源
+        );
     }
 
     @Override
     public void applyLimit(long limit) {
-        source.pushLimit(limit);
+        // 应用限制下推逻辑
+        source.pushLimit(limit); // 下推限制到表源
     }
 
     @Override
     public boolean supportsNestedProjection() {
-        return false;
+        // 返回是否支持嵌套投影
+        return false; // 不支持嵌套投影
     }
 
     @Override
     public void applyProjection(int[][] projectedFields) {
-        source.pushProjection(projectedFields);
+        // 应用投影下推逻辑
+        source.pushProjection(projectedFields); // 下推投影到表源
     }
 }

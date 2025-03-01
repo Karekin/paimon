@@ -33,10 +33,14 @@ import static org.apache.paimon.append.BucketedAppendCompactManager.fileComparat
 /** Append only implementation of {@link SplitGenerator}. */
 public class AppendOnlySplitGenerator implements SplitGenerator {
 
+    // 目标分裂大小
     private final long targetSplitSize;
+    // 打开文件的成本
     private final long openFileCost;
+    // 桶模式，控制数据的桶分配方式
     private final BucketMode bucketMode;
 
+    // 构造函数，初始化目标分裂大小、打开文件成本和桶模式
     public AppendOnlySplitGenerator(
             long targetSplitSize, long openFileCost, BucketMode bucketMode) {
         this.targetSplitSize = targetSplitSize;
@@ -44,28 +48,35 @@ public class AppendOnlySplitGenerator implements SplitGenerator {
         this.bucketMode = bucketMode;
     }
 
+    // 判断是否始终可以转换为原始数据
     @Override
     public boolean alwaysRawConvertible() {
+        // 对于追加模式来说，总是可以直接转换为原始数据
         return true;
     }
 
+    // 为批量扫描生成数据分裂
     @Override
     public List<SplitGroup> splitForBatch(List<DataFileMeta> input) {
+        // 对输入文件进行排序，排序方式根据桶模式决定
         List<DataFileMeta> files = new ArrayList<>(input);
         files.sort(fileComparator(bucketMode == BucketMode.BUCKET_UNAWARE));
+        // 定义文件的权重函数
         Function<DataFileMeta, Long> weightFunc = file -> Math.max(file.fileSize(), openFileCost);
+        // 使用有序装箱算法生成分裂
         return BinPacking.packForOrdered(files, weightFunc, targetSplitSize).stream()
                 .map(SplitGroup::rawConvertibleGroup)
                 .collect(Collectors.toList());
     }
 
+    // 为流式扫描生成数据分裂
     @Override
     public List<SplitGroup> splitForStreaming(List<DataFileMeta> files) {
-        // When the bucket mode is unaware, we spit the files as batch, because unaware-bucket table
-        // only contains one bucket (bucket 0).
+        // 如果是桶无感知模式，调用批量分裂生成逻辑
         if (bucketMode == BucketMode.BUCKET_UNAWARE) {
             return splitForBatch(files);
         } else {
+            // 否则，所有数据作为一个分裂组返回
             return Collections.singletonList(SplitGroup.rawConvertibleGroup(files));
         }
     }

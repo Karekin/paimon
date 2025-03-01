@@ -41,14 +41,20 @@ import java.util.zip.CRC32;
 import static org.apache.paimon.utils.Preconditions.checkArgument;
 import static org.apache.paimon.utils.Preconditions.checkNotNull;
 
-/** DeletionVectors index file. */
+/** 删除向量索引文件。 */
 public class DeletionVectorsIndexFile extends IndexFile {
 
-    public static final String DELETION_VECTORS_INDEX = "DELETION_VECTORS";
-    public static final byte VERSION_ID_V1 = 1;
+    public static final String DELETION_VECTORS_INDEX = "DELETION_VECTORS"; // 删除向量索引文件类型标识
+    public static final byte VERSION_ID_V1 = 1; // 文件版本号
 
-    private final MemorySize targetSizePerIndexFile;
+    private final MemorySize targetSizePerIndexFile; // 每个索引文件的目标大小
 
+    /**
+     * 构造函数，初始化删除向量索引文件。
+     * @param fileIO 文件输入输出对象
+     * @param pathFactory 路径工厂
+     * @param targetSizePerIndexFile 每个索引文件的目标大小
+     */
     public DeletionVectorsIndexFile(
             FileIO fileIO, PathFactory pathFactory, MemorySize targetSizePerIndexFile) {
         super(fileIO, pathFactory);
@@ -56,11 +62,10 @@ public class DeletionVectorsIndexFile extends IndexFile {
     }
 
     /**
-     * Reads all deletion vectors from a specified file.
-     *
-     * @return A map where the key represents which file the DeletionVector belongs to, and the
-     *     value is the corresponding DeletionVector object.
-     * @throws UncheckedIOException If an I/O error occurs while reading from the file.
+     * 从指定的索引文件元数据中读取所有删除向量。
+     * @param fileMeta 索引文件元数据
+     * @return 包含文件名和对应删除向量的映射表
+     * @throws UncheckedIOException 如果读取文件时发生 I/O 错误
      */
     public Map<String, DeletionVector> readAllDeletionVectors(IndexFileMeta fileMeta) {
         LinkedHashMap<String, Pair<Integer, Integer>> deletionVectorRanges =
@@ -71,7 +76,7 @@ public class DeletionVectorsIndexFile extends IndexFile {
         Map<String, DeletionVector> deletionVectors = new HashMap<>();
         Path filePath = pathFactory.toPath(indexFileName);
         try (SeekableInputStream inputStream = fileIO.newInputStream(filePath)) {
-            checkVersion(inputStream);
+            checkVersion(inputStream); // 检查版本号
             DataInputStream dataInputStream = new DataInputStream(inputStream);
             for (Map.Entry<String, Pair<Integer, Integer>> entry :
                     deletionVectorRanges.entrySet()) {
@@ -81,22 +86,29 @@ public class DeletionVectorsIndexFile extends IndexFile {
             }
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Unable to read deletion vectors from file: "
-                            + filePath
-                            + ", deletionVectorRanges: "
+                    "无法从文件 " + filePath + " 读取删除向量，删除向量范围："
                             + deletionVectorRanges,
                     e);
         }
         return deletionVectors;
     }
 
+    /**
+     * 从多个索引文件元数据中读取所有删除向量。
+     * @param indexFiles 索引文件元数据列表
+     * @return 包含文件名和对应删除向量的映射表
+     */
     public Map<String, DeletionVector> readAllDeletionVectors(List<IndexFileMeta> indexFiles) {
         Map<String, DeletionVector> deletionVectors = new HashMap<>();
         indexFiles.forEach(indexFile -> deletionVectors.putAll(readAllDeletionVectors(indexFile)));
         return deletionVectors;
     }
 
-    /** Reads deletion vectors from a list of DeletionFile which belong to a same index file. */
+    /**
+     * 从同一索引文件的多个删除文件中读取所有删除向量。
+     * @param dataFileToDeletionFiles 数据文件与删除文件的映射表
+     * @return 包含文件名和对应删除向量的映射表
+     */
     public Map<String, DeletionVector> readDeletionVector(
             Map<String, DeletionFile> dataFileToDeletionFiles) {
         Map<String, DeletionVector> deletionVectors = new HashMap<>();
@@ -106,7 +118,7 @@ public class DeletionVectorsIndexFile extends IndexFile {
 
         String indexFile = dataFileToDeletionFiles.values().stream().findAny().get().path();
         try (SeekableInputStream inputStream = fileIO.newInputStream(new Path(indexFile))) {
-            checkVersion(inputStream);
+            checkVersion(inputStream); // 检查版本号
             for (String dataFile : dataFileToDeletionFiles.keySet()) {
                 DeletionFile deletionFile = dataFileToDeletionFiles.get(dataFile);
                 checkArgument(deletionFile.path().equals(indexFile));
@@ -116,35 +128,34 @@ public class DeletionVectorsIndexFile extends IndexFile {
                         dataFile, readDeletionVector(dataInputStream, (int) deletionFile.length()));
             }
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read deletion vector from file: " + indexFile, e);
+            throw new RuntimeException("无法从文件 " + indexFile + " 读取删除向量", e);
         }
         return deletionVectors;
     }
 
+    /**
+     * 从删除文件中读取删除向量。
+     * @param deletionFile 删除文件
+     * @return 删除向量对象
+     */
     public DeletionVector readDeletionVector(DeletionFile deletionFile) {
         String indexFile = deletionFile.path();
         try (SeekableInputStream inputStream = fileIO.newInputStream(new Path(indexFile))) {
-            checkVersion(inputStream);
+            checkVersion(inputStream); // 检查版本号
             checkArgument(deletionFile.path().equals(indexFile));
             inputStream.seek(deletionFile.offset());
             DataInputStream dataInputStream = new DataInputStream(inputStream);
             return readDeletionVector(dataInputStream, (int) deletionFile.length());
         } catch (Exception e) {
-            throw new RuntimeException("Unable to read deletion vector from file: " + indexFile, e);
+            throw new RuntimeException("无法从文件 " + indexFile + " 读取删除向量", e);
         }
     }
 
     /**
-     * Write deletion vectors to a new file, the format of this file can be referenced at: <a
-     * href="https://cwiki.apache.org/confluence/x/Tws4EQ">PIP-16</a>.
-     *
-     * @param input A map where the key represents which file the DeletionVector belongs to, and the
-     *     value is the corresponding DeletionVector object.
-     * @return A Pair object specifying the name of the written new file and a map where the key
-     *     represents which file the DeletionVector belongs to and the value is a Pair object
-     *     specifying the range (start position and size) within the file where the deletion vector
-     *     data is located.
-     * @throws UncheckedIOException If an I/O error occurs while writing to the file.
+     * 将删除向量写入新文件。
+     * @param input 包含文件名和对应删除向量的映射表
+     * @return 写入的新索引文件元数据列表
+     * @throws UncheckedIOException 如果写入文件时发生 I/O 错误
      */
     public List<IndexFileMeta> write(Map<String, DeletionVector> input) {
         try {
@@ -153,50 +164,63 @@ public class DeletionVectorsIndexFile extends IndexFile {
                             this.fileIO, this.pathFactory, this.targetSizePerIndexFile);
             return writer.write(input);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write deletion vectors.", e);
+            throw new RuntimeException("无法写入删除向量", e);
         }
     }
 
+    /**
+     * 检查文件版本号。
+     * @param in 输入流
+     * @throws IOException 如果读取流时发生 I/O 错误
+     */
     private void checkVersion(InputStream in) throws IOException {
         int version = in.read();
         if (version != VERSION_ID_V1) {
             throw new RuntimeException(
-                    "Version not match, actual version: "
-                            + version
-                            + ", expert version: "
-                            + VERSION_ID_V1);
+                    "版本号不匹配，实际版本号: " + version + ", 预期版本号: " + VERSION_ID_V1);
         }
     }
 
+    /**
+     * 从数据输入流中读取删除向量。
+     * @param inputStream 数据输入流
+     * @param size 删除向量的大小
+     * @return 删除向量对象
+     */
     private DeletionVector readDeletionVector(DataInputStream inputStream, int size) {
         try {
-            // check size
+            // 检查大小
             int actualSize = inputStream.readInt();
             if (actualSize != size) {
                 throw new RuntimeException(
-                        "Size not match, actual size: " + actualSize + ", expert size: " + size);
+                        "大小不匹配，实际大小: " + actualSize + ", 预期大小: " + size);
             }
 
-            // read DeletionVector bytes
+            // 读取删除向量字节数据
             byte[] bytes = new byte[size];
             inputStream.readFully(bytes);
 
-            // check checksum
+            // 检查校验和
             int checkSum = calculateChecksum(bytes);
             int actualCheckSum = inputStream.readInt();
             if (actualCheckSum != checkSum) {
                 throw new RuntimeException(
-                        "Checksum not match, actual checksum: "
+                        "校验和不匹配，实际校验和: "
                                 + actualCheckSum
-                                + ", expected checksum: "
+                                + ", 预期校验和: "
                                 + checkSum);
             }
             return DeletionVector.deserializeFromBytes(bytes);
         } catch (IOException e) {
-            throw new UncheckedIOException("Unable to read deletion vector", e);
+            throw new UncheckedIOException("无法读取删除向量", e);
         }
     }
 
+    /**
+     * 计算字节数组的校验和。
+     * @param bytes 字节数组
+     * @return 校验和
+     */
     public static int calculateChecksum(byte[] bytes) {
         CRC32 crc = new CRC32();
         crc.update(bytes);

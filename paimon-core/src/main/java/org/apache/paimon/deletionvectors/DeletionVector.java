@@ -33,30 +33,26 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The DeletionVector can efficiently record the positions of rows that are deleted in a file, which
- * can then be used to filter out deleted rows when processing the file.
+ * 删除向量可以高效地记录文件中被删除的行的位置，从而在处理文件时可以过滤掉这些已删除的行。
  */
 public interface DeletionVector {
 
     /**
-     * Marks the row at the specified position as deleted.
-     *
-     * @param position The position of the row to be marked as deleted.
+     * 标记指定位置的行已删除。
+     * @param position 要标记为已删除的行的位置。
      */
     void delete(long position);
 
     /**
-     * merge another {@link DeletionVector} to this current one.
-     *
-     * @param deletionVector the other {@link DeletionVector}
+     * 将另一个 {@link DeletionVector} 合并到当前的删除向量中。
+     * @param deletionVector 要合并的另一个删除向量。
      */
     void merge(DeletionVector deletionVector);
 
     /**
-     * Marks the row at the specified position as deleted.
-     *
-     * @param position The position of the row to be marked as deleted.
-     * @return true if the added position wasn't already deleted. False otherwise.
+     * 标记指定位置的行已删除。
+     * @param position 要标记为已删除的行的位置。
+     * @return 如果添加的位置之前已被删除，则返回 false；如果之前未被删除，则返回 true。
      */
     default boolean checkedDelete(long position) {
         if (isDeleted(position)) {
@@ -68,47 +64,43 @@ public interface DeletionVector {
     }
 
     /**
-     * Checks if the row at the specified position is marked as deleted.
-     *
-     * @param position The position of the row to check.
-     * @return true if the row is marked as deleted, false otherwise.
+     * 检查指定位置的行是否被标记为已删除。
+     * @param position 要检查的行的位置。
+     * @return 如果行被标记为已删除，则返回 true；否则返回 false。
      */
     boolean isDeleted(long position);
 
     /**
-     * Determines if the deletion vector is empty, indicating no deletions.
-     *
-     * @return true if the deletion vector is empty, false if it contains deletions.
+     * 确定删除向量是否为空，即是否没有删除任何行。
+     * @return 如果删除向量为空，返回 true；否则返回 false。
      */
     boolean isEmpty();
 
-    /** @return the number of distinct integers added to the DeletionVector. */
+    /** 返回删除向量中添加的不同整数的数量。 */
     long getCardinality();
 
     /**
-     * Serializes the deletion vector to a byte array for storage or transmission.
-     *
-     * @return A byte array representing the serialized deletion vector.
+     * 将删除向量序列化为字节数组，以便存储或传输。
+     * @return 表示序列化删除向量的字节数组。
      */
     byte[] serializeToBytes();
 
     /**
-     * Deserializes a deletion vector from a byte array.
-     *
-     * @param bytes The byte array containing the serialized deletion vector.
-     * @return A DeletionVector instance that represents the deserialized data.
+     * 从字节数组反序列化删除向量。
+     * @param bytes 包含序列化删除向量的字节数组。
+     * @return 表示反序列化数据的 DeletionVector 实例。
      */
     static DeletionVector deserializeFromBytes(byte[] bytes) {
         try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-                DataInputStream dis = new DataInputStream(bis)) {
+             DataInputStream dis = new DataInputStream(bis)) {
             int magicNum = dis.readInt();
             if (magicNum == BitmapDeletionVector.MAGIC_NUMBER) {
                 return BitmapDeletionVector.deserializeFromDataInput(dis);
             } else {
-                throw new RuntimeException("Invalid magic number: " + magicNum);
+                throw new RuntimeException("无效的魔术数字：" + magicNum);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to deserialize deletion vector", e);
+            throw new RuntimeException("无法反序列化删除向量", e);
         }
     }
 
@@ -120,18 +112,18 @@ public interface DeletionVector {
             int actualLength = dis.readInt();
             if (actualLength != deletionFile.length()) {
                 throw new RuntimeException(
-                        "Size not match, actual size: "
+                        "大小不匹配，实际大小："
                                 + actualLength
-                                + ", expert size: "
+                                + "，预期大小："
                                 + deletionFile.length()
-                                + ", file path: "
+                                + "，文件路径："
                                 + path);
             }
             int magicNum = dis.readInt();
             if (magicNum == BitmapDeletionVector.MAGIC_NUMBER) {
                 return BitmapDeletionVector.deserializeFromDataInput(dis);
             } else {
-                throw new RuntimeException("Invalid magic number: " + magicNum);
+                throw new RuntimeException("无效的魔术数字：" + magicNum);
             }
         }
     }
@@ -159,7 +151,7 @@ public interface DeletionVector {
         };
     }
 
-    /** Interface to create {@link DeletionVector}. */
+    /** 创建 {@link DeletionVector} 的接口。 */
     interface Factory {
         Optional<DeletionVector> create(String fileName) throws IOException;
     }

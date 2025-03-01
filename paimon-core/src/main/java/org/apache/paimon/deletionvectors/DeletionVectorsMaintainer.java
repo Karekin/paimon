@@ -35,12 +35,12 @@ import java.util.stream.Collectors;
 
 import static org.apache.paimon.deletionvectors.DeletionVectorsIndexFile.DELETION_VECTORS_INDEX;
 
-/** Maintainer of deletionVectors index.deletion中的文件 */
+/** 维护删除向量的索引文件。 */
 public class DeletionVectorsMaintainer {
 
-    private final IndexFileHandler indexFileHandler;
-    private final Map<String, DeletionVector> deletionVectors;
-    private boolean modified;
+    private final IndexFileHandler indexFileHandler; // 索引文件处理器
+    private final Map<String, DeletionVector> deletionVectors; // 存储删除向量的映射表
+    private boolean modified; // 是否有修改
 
     private DeletionVectorsMaintainer(
             IndexFileHandler fileHandler, Map<String, DeletionVector> deletionVectors) {
@@ -50,11 +50,9 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Notifies a new deletion which marks the specified row position as deleted with the given file
-     * name.
-     *
-     * @param fileName The name of the file where the deletion occurred.
-     * @param position The row position within the file that has been deleted.
+     * 通知新的删除操作，将指定文件的指定行位置标记为已删除。
+     * @param fileName 文件名
+     * @param position 行位置
      */
     public void notifyNewDeletion(String fileName, long position) {
         DeletionVector deletionVector =
@@ -65,10 +63,9 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Notifies a new deletion which marks the specified deletion vector with the given file name.
-     *
-     * @param fileName The name of the file where the deletion occurred.
-     * @param deletionVector The deletion vector
+     * 通知新的删除操作，将指定文件的删除向量设置为给定的删除向量。
+     * @param fileName 文件名
+     * @param deletionVector 删除向量
      */
     public void notifyNewDeletion(String fileName, DeletionVector deletionVector) {
         deletionVectors.put(fileName, deletionVector);
@@ -76,11 +73,9 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Merge a new deletion which marks the specified deletion vector with the given file name, if
-     * the previous deletion vector exist, merge the old one.
-     *
-     * @param fileName The name of the file where the deletion occurred.
-     * @param deletionVector The deletion vector
+     * 合并新的删除向量，如果存在旧的删除向量则进行合并。
+     * @param fileName 文件名
+     * @param deletionVector 新的删除向量
      */
     public void mergeNewDeletion(String fileName, DeletionVector deletionVector) {
         DeletionVector old = deletionVectors.get(fileName);
@@ -92,10 +87,8 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Removes the specified file's deletion vector, this method is typically used for remove before
-     * files' deletion vector in compaction.
-     *
-     * @param fileName The name of the file whose deletion vector should be removed.
+     * 删除指定文件的删除向量，通常用于在压缩过程中移除旧文件的删除向量。
+     * @param fileName 文件名
      */
     public void removeDeletionVectorOf(String fileName) {
         if (deletionVectors.containsKey(fileName)) {
@@ -105,10 +98,8 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Write new deletion vectors index file if any modifications have been made.
-     *
-     * @return A list containing the metadata of the deletion vectors index file, or an empty list
-     *     if no changes need to be committed.
+     * 如果有修改，则写入新的删除向量索引文件。
+     * @return 包含删除向量索引文件元数据的列表，如果无需提交更改则返回空列表
      */
     public List<IndexFileMeta> writeDeletionVectorsIndex() {
         if (modified) {
@@ -119,11 +110,9 @@ public class DeletionVectorsMaintainer {
     }
 
     /**
-     * Retrieves the deletion vector associated with the specified file name.
-     *
-     * @param fileName The name of the file for which the deletion vector is requested.
-     * @return An {@code Optional} containing the deletion vector if it exists, or an empty {@code
-     *     Optional} if not.
+     * 获取指定文件名对应的删除向量。
+     * @param fileName 文件名
+     * @return 包含删除向量的 Optional 或空 Optional
      */
     public Optional<DeletionVector> deletionVectorOf(String fileName) {
         return Optional.ofNullable(deletionVectors.get(fileName));
@@ -142,7 +131,7 @@ public class DeletionVectorsMaintainer {
         return new Factory(handler);
     }
 
-    /** Factory to restore {@link DeletionVectorsMaintainer}. */
+    /** 工厂类，用于恢复或创建 DeletionVectorsMaintainer。 */
     public static class Factory {
 
         private final IndexFileHandler handler;
@@ -151,6 +140,13 @@ public class DeletionVectorsMaintainer {
             this.handler = handler;
         }
 
+        /**
+         * 根据指定的快照 ID、分区和桶号创建或恢复 DeletionVectorsMaintainer。
+         * @param snapshotId 快照 ID
+         * @param partition 分区
+         * @param bucket 桶号
+         * @return DeletionVectorsMaintainer 实例
+         */
         public DeletionVectorsMaintainer createOrRestore(
                 @Nullable Long snapshotId, BinaryRow partition, int bucket) {
             List<IndexFileMeta> indexFiles =
@@ -169,18 +165,27 @@ public class DeletionVectorsMaintainer {
                     snapshotId == null
                             ? Collections.emptyList()
                             : handler.scanEntries(snapshotId, DELETION_VECTORS_INDEX, partition)
-                                    .stream()
-                                    .map(IndexManifestEntry::indexFile)
-                                    .collect(Collectors.toList());
+                            .stream()
+                            .map(IndexManifestEntry::indexFile)
+                            .collect(Collectors.toList());
             Map<String, DeletionVector> deletionVectors =
                     new HashMap<>(handler.readAllDeletionVectors(indexFiles));
             return createOrRestore(deletionVectors);
         }
 
+        /**
+         * 创建一个新的 DeletionVectorsMaintainer 实例。
+         * @return DeletionVectorsMaintainer 实例
+         */
         public DeletionVectorsMaintainer create() {
             return createOrRestore(new HashMap<>());
         }
 
+        /**
+         * 创建或恢复 DeletionVectorsMaintainer 实例。
+         * @param deletionVectors 删除向量映射表
+         * @return DeletionVectorsMaintainer 实例
+         */
         public DeletionVectorsMaintainer createOrRestore(
                 Map<String, DeletionVector> deletionVectors) {
             return new DeletionVectorsMaintainer(handler, deletionVectors);
