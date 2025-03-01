@@ -41,32 +41,69 @@ import java.util.concurrent.ExecutionException;
 
 import static org.apache.paimon.service.ServiceManager.PRIMARY_KEY_LOOKUP;
 
-/** Implementation for {@link TableQuery} to lookup data from remote service. */
+/**
+ * TableQuery 接口的实现类，用于通过远程服务查询数据。
+ */
 public class RemoteTableQuery implements TableQuery {
 
+    // 文件存储表
     private final FileStoreTable table;
+
+    // 键值查询客户端
     private final KvQueryClient client;
+
+    // 键序列化器
     private final InternalRowSerializer keySerializer;
 
+    // 值投影（可选）
     @Nullable private int[] projection;
 
+    /**
+     * 远程表查询构造函数。
+     *
+     * @param table 文件存储表
+     */
     public RemoteTableQuery(Table table) {
         this.table = (FileStoreTable) table;
+
+        // 创建服务管理器
         ServiceManager manager = this.table.store().newServiceManager();
+
+        // 初始化查询客户端
         this.client = new KvQueryClient(new QueryLocationImpl(manager), 1);
+
+        // 创建键序列化器，基于表的主键
         this.keySerializer =
-                InternalSerializers.create(TypeUtils.project(table.rowType(), table.primaryKeys()));
+                InternalSerializers.create(
+                        TypeUtils.project(table.rowType(), table.primaryKeys()));
     }
 
+    /**
+     * 检查远程服务是否可用。
+     *
+     * @param table 文件存储表
+     * @return 远程服务是否可用
+     */
     public static boolean isRemoteServiceAvailable(FileStoreTable table) {
         return table.store().newServiceManager().service(PRIMARY_KEY_LOOKUP).isPresent();
     }
 
+    /**
+     * 根据键查询数据。
+     *
+     * @param partition 分区
+     * @param bucket 桶编号
+     * @param key 键
+     * @return 查询结果
+     * @throws IOException 查询异常
+     */
     @Nullable
     @Override
     public InternalRow lookup(BinaryRow partition, int bucket, InternalRow key) throws IOException {
         BinaryRow row;
+
         try {
+            // 使用查询客户端获取值
             row =
                     client.getValues(
                                     partition,
@@ -80,40 +117,74 @@ public class RemoteTableQuery implements TableQuery {
             throw new IOException(e.getCause());
         }
 
+        // 如果没有投影，直接返回结果
         if (projection == null) {
             return row;
         }
 
+        // 如果查询结果为空，返回 null
         if (row == null) {
             return null;
         }
 
+        // 返回投影后的结果
         return ProjectedRow.from(projection).replaceRow(row);
     }
 
+    /**
+     * 设置值投影（基于顶层字段索引）。
+     *
+     * @param projection 投影
+     * @return RemoteTableQuery 实例
+     */
     @Override
     public RemoteTableQuery withValueProjection(int[] projection) {
         return withValueProjection(Projection.of(projection).toNestedIndexes());
     }
 
+    /**
+     * 设置值投影（基于嵌套字段索引）。
+     *
+     * @param projection 投影
+     * @return RemoteTableQuery 实例
+     */
     @Override
     public RemoteTableQuery withValueProjection(int[][] projection) {
+        // 将嵌套投影转换为顶层投影
         this.projection = Projection.of(projection).toTopLevelIndexes();
         return this;
     }
 
+    /**
+     * 创建值序列化器。
+     *
+     * @return 值序列化器
+     */
     @Override
     public InternalRowSerializer createValueSerializer() {
-        return InternalSerializers.create(TypeUtils.project(table.rowType(), projection));
+        // 根据投影创建序列化器
+        return InternalSerializers.create(
+                TypeUtils.project(table.rowType(), projection));
     }
 
+    /**
+     * 关闭查询客户端。
+     *
+     * @throws IOException 关闭异常
+     */
     @Override
     public void close() throws IOException {
         client.shutdown();
     }
 
+    /**
+     * 发起查询取消请求（仅用于测试）。
+     *
+     * @return 代表取消操作的 CompletableFuture
+     */
     @VisibleForTesting
     public CompletableFuture<Void> cancel() {
+        // 返回查询客户端的关闭 Future
         return client.shutdownFuture();
     }
 }

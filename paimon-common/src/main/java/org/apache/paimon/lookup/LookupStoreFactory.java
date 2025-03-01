@@ -35,23 +35,40 @@ import java.util.Comparator;
 import java.util.function.Function;
 
 /**
- * A key-value store for lookup, key-value store should be single binary file written once and ready
- * to be used. This factory provide two interfaces:
- *
- * <ul>
- *   <li>Writer: written once to prepare binary file.
- *   <li>Reader: lookup value by key bytes.
- * </ul>
+ * 查找存储工厂接口，用于创建键值查找存储。
+ * 该接口定义了创建查找存储写入器和读取器的规范，以及一些静态方法用于生成布隆过滤器和创建具体的工厂实例。
  */
 public interface LookupStoreFactory {
 
+    /**
+     * 创建查找存储写入器。
+     * @param file 文件对象，表示存储数据的文件
+     * @param bloomFilter 布隆过滤器构建器（可为空）
+     * @return 查找存储写入器
+     * @throws IOException 如果发生 IO 异常
+     */
     LookupStoreWriter createWriter(File file, @Nullable BloomFilter.Builder bloomFilter)
             throws IOException;
 
+    /**
+     * 创建查找存储读取器。
+     * @param file 文件对象，表示存储数据的文件
+     * @param context 上下文对象，用于在写入器和读取器之间传递共享信息
+     * @return 查找存储读取器
+     * @throws IOException 如果发生 IO 异常
+     */
     LookupStoreReader createReader(File file, Context context) throws IOException;
 
+    /**
+     * 创建布隆过滤器生成器。
+     * 该方法根据配置生成布隆过滤器的生成器函数，用于在数据写入时生成布隆过滤器。
+     * @param options 配置选项
+     * @return 布隆过滤器生成器函数
+     */
     static Function<Long, BloomFilter.Builder> bfGenerator(Options options) {
         Function<Long, BloomFilter.Builder> bfGenerator = rowCount -> null;
+
+        // 如果启用了布隆过滤器
         if (options.get(CoreOptions.LOOKUP_CACHE_BLOOM_FILTER_ENABLED)) {
             double bfFpp = options.get(CoreOptions.LOOKUP_CACHE_BLOOM_FILTER_FPP);
             bfGenerator =
@@ -62,12 +79,24 @@ public interface LookupStoreFactory {
                         return null;
                     };
         }
+
         return bfGenerator;
     }
 
+    /**
+     * 创建具体的 LookupStoreFactory 实例。
+     * 根据配置选项创建不同类型的查找存储工厂，支持排序类型和哈希类型。
+     * @param options 核心配置选项
+     * @param cacheManager 缓存管理器
+     * @param keyComparator 键比较器
+     * @return 查找存储工厂实例
+     * @throws IllegalArgumentException 如果不支持的文件类型被指定
+     */
     static LookupStoreFactory create(
             CoreOptions options, CacheManager cacheManager, Comparator<MemorySlice> keyComparator) {
         CompressOptions compression = options.lookupCompressOptions();
+
+        // 根据配置的查找本地文件类型创建对应的工厂
         switch (options.lookupLocalFileType()) {
             case SORT:
                 return new SortLookupStoreFactory(
@@ -84,6 +113,9 @@ public interface LookupStoreFactory {
         }
     }
 
-    /** Context between writer and reader. */
+    /**
+     * 上下文接口，用于在写入器和读取器之间传递共享信息。
+     * 该接口目前没有具体的实现，但提供了一个通用的上下文概念，用于在写入器和读取器之间传递必要的数据或状态。
+     */
     interface Context {}
 }

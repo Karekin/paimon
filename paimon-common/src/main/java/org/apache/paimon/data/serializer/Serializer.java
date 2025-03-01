@@ -24,67 +24,69 @@ import org.apache.paimon.io.DataOutputView;
 import java.io.IOException;
 import java.io.Serializable;
 
-/** Serializer to serialize internal data structure. */
+/**
+ * 序列化器接口，用于序列化对象结构。
+ * <p>
+ * 该接口定义了序列化器的基本功能，包括创建对象副本、序列化和反序列化等。
+ */
 public interface Serializer<T> extends Serializable {
 
     /**
-     * Creates a deep copy of this serializer if it is necessary, i.e. if it is stateful. This can
-     * return itself if the serializer is not stateful.
+     * 如果序列化器是需要状态的，那么创建该序列化器的一个深层副本。
+     * 如果序列化器不需要状态，则直接返回当前对象。
+     * <p>
+     * 这是因为序列化器可能会被多个线程使用。无状态的序列化器是线程安全的，
+     * 而有状态的序列化器则可能不是。通过创建副本，可以确保每个线程都有自己的序列化器实例。
      *
-     * <p>We need this because Serializers might be used in several threads. Stateless serializers
-     * are inherently thread-safe while stateful serializers might not be thread-safe.
+     * @return 序列化器的副本
      */
     Serializer<T> duplicate();
 
     /**
-     * Creates a deep copy of the given element in a new element.
+     * 创建一个给定元素的深度副本。
      *
-     * @param from The element reuse be copied.
-     * @return A deep copy of the element.
+     * @param from 要复制的元素
+     * @return 深度副本元素
      */
     T copy(T from);
 
     /**
-     * Serializes the given record to the given target output view.
+     * 将给定的记录序列化到目标输出视图。
      *
-     * @param record The record to serialize.
-     * @param target The output view to write the serialized data to.
-     * @throws IOException Thrown, if the serialization encountered an I/O related error. Typically
-     *     raised by the output view, which may have an underlying I/O channel to which it
-     *     delegates.
+     * @param record 要序列化的记录
+     * @param target 目标输出视图
+     * @throws IOException 如果序列化过程中出现I/O相关错误
      */
     void serialize(T record, DataOutputView target) throws IOException;
 
     /**
-     * De-serializes a record from the given source input view.
+     * 从给定的源输入视图反序列化记录。
      *
-     * @param source The input view from which to read the data.
-     * @return The deserialized element.
-     * @throws IOException Thrown, if the de-serialization encountered an I/O related error.
-     *     Typically raised by the input view, which may have an underlying I/O channel from which
-     *     it reads.
+     * @param source 源输入视图
+     * @return 反序列化的元素
+     * @throws IOException 如果反序列化过程中出现I/O相关错误
      */
     T deserialize(DataInputView source) throws IOException;
 
     /**
-     * Serializes the given record to string.
+     * 将给定的记录序列化为字符串。
      *
-     * @param record The record to serialize.
-     * @return The serialized element.
+     * @param record 要序列化的记录
+     * @return 序列化后的字符串
      */
     default String serializeToString(T record) {
         throw new UnsupportedOperationException(
-                String.format("serialize %s to string is unsupported", record));
+                String.format("不支持将 %s 序列化为字符串", record));
     }
 
     /**
-     * De-serializes a record from string.
+     * 从字符串反序列化记录。
      *
-     * @param s The string to de-serialize.
-     * @return The deserialized element.
+     * @param s 要反序列化的字符串
+     * @return 反序列化的元素
      */
     default T deserializeFromString(String s) {
         throw new UnsupportedOperationException(
-                String.format("deserialize %s from string is unsupported", s));
+                String.format("不支持从字符串 %s 反序列化", s));
     }
 }
