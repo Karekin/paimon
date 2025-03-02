@@ -19,22 +19,25 @@
 package org.apache.paimon.factories;
 
 /**
- * Base interface for all kind of factories that create object instances from a list of key-value
- * pairs in Paimon's catalog, lineage.
+ * 该接口是所有类型的工厂（Factory）的基础接口，
+ * 这些工厂用于从 Paimon 的 catalog（目录）和 lineage（数据血缘）中的键值对列表创建对象实例。
  *
- * <p>A factory is uniquely identified by {@link Class} and {@link #identifier()}.
+ * <p>工厂的唯一标识由 {@link Class} 和 {@link #identifier()} 组成。
  *
- * <p>The list of available factories is discovered using Java's Service Provider Interfaces (SPI).
- * Classes that implement this interface can be added to {@code
- * META_INF/services/org.apache.paimon.factories.Factory} in JAR files.
+ * <p>工厂的列表是通过 Java 的服务提供者接口（Service Provider Interfaces，SPI）机制进行发现的。
+ * 实现该接口的类可以被添加到 JAR 文件中的
+ * {@code META_INF/services/org.apache.paimon.factories.Factory} 目录下，
+ * 这样就可以通过 SPI 机制进行动态加载。
  */
 public interface Factory {
+
     /**
-     * Returns a unique identifier among same factory interfaces.
+     * 返回该工厂在相同类型的工厂接口中唯一的标识符。
      *
-     * <p>For consistency, an identifier should be declared as one lower case word (e.g. {@code
-     * kafka}). If multiple factories exist for different versions, a version should be appended
-     * using "-" (e.g. {@code elasticsearch-7}).
+     * <p>为了保持一致性，标识符应该是一个小写的单词（例如 {@code kafka}）。
+     * 如果存在不同版本的多个工厂，则应使用 "-" 追加版本号（例如 {@code elasticsearch-7}）。
+     *
+     * @return 该工厂的唯一标识符
      */
     String identifier();
 }

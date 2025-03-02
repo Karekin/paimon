@@ -5,35 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b4c4ac99-5cad-42e3-9468-db772ba6a63f" name="Changes" comment="doc: 学习paimon源码">
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/serializer/Serializer.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/serializer/Serializer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/LookupStoreFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/LookupStoreFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreReader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreWriter.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/lookup/hash/HashLookupStoreWriter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/BulkLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/BulkLoader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBListState.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBListState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBSetState.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBSetState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBValueState.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/lookup/RocksDBValueState.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/LookupUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/LookupUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/query/LocalTableQuery.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/query/LocalTableQuery.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/AbstractDataTableScan.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/source/AbstractDataTableScan.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/system/FileMonitorTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/system/FileMonitorTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/AsyncLookupFunctionWrapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/AsyncLookupFunctionWrapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/DynamicPartitionLoader.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/DynamicPartitionLoader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/FileStoreLookupFunction.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/FileStoreLookupFunction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/FullCacheLookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/FullCacheLookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/LookupStreamingReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/LookupStreamingReader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/LookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/LookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/NoPrimaryKeyLookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/NoPrimaryKeyLookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/PrimaryKeyLookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/PrimaryKeyLookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/PrimaryKeyPartialLookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/PrimaryKeyPartialLookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/SecondaryIndexLookupTable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/lookup/SecondaryIndexLookupTable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/procedure/QueryServiceProcedure.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/procedure/QueryServiceProcedure.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/query/RemoteTableQuery.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/query/RemoteTableQuery.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryExecutorOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryExecutorOperator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryFileMonitor.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryFileMonitor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/service/QueryService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paimon-service/paimon-service-runtime/src/main/java/org/apache/paimon/service/server/KvServerHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-service/paimon-service-runtime/src/main/java/org/apache/paimon/service/server/KvServerHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-ademo/src/main/java/com/paimon/source/PaimonSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-ademo/src/main/java/com/paimon/source/PaimonSource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/BinaryRow.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/data/BinaryRow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/factories/Factory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-common/src/main/java/org/apache/paimon/factories/Factory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryIndexedSortable.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryIndexedSortable.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/ChannelComputer.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/ChannelComputer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-cdc/src/main/java/org/apache/paimon/flink/kafka/KafkaLogStoreFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-cdc/src/main/java/org/apache/paimon/flink/kafka/KafkaLogStoreFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/log/LogStoreTableFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/log/LogStoreTableFactory.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RowDataChannelComputer.java" beforeDir="false" afterPath="$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RowDataChannelComputer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +130,7 @@
       <recent name="com.lineage.flink" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.PaimonQuery">
+  <component name="RunManager" selected="Application.PaimonSource">
     <configuration default="true" type="AZURE_FUNCTION_SUPPORT" factoryName="Run Functions">
       <option name="appName" />
       <option name="appServicePlanName" />
@@ -261,9 +241,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.PaimonQuery" />
         <item itemvalue="Application.PaimonSource" />
         <item itemvalue="Application.ApiHelloWord" />
+        <item itemvalue="Application.PaimonQuery" />
         <item itemvalue="Application.FlinkSQLDategen" />
         <item itemvalue="Application.PaimonSourceWaterMark" />
       </list>
@@ -290,7 +270,9 @@
       <workItem from="1740701749532" duration="1348000" />
       <workItem from="1740718044749" duration="2161000" />
       <workItem from="1740742369098" duration="18866000" />
-      <workItem from="1740790944394" duration="40527000" />
+      <workItem from="1740790944394" duration="43038000" />
+      <workItem from="1740878818702" duration="11606000" />
+      <workItem from="1740900797268" duration="5098000" />
     </task>
     <task id="LOCAL-00001" summary="20241121初始化">
       <option name="closed" value="true" />
@@ -380,7 +362,14 @@
       <option name="project" value="LOCAL" />
       <updated>1740823603990</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="doc: 学习paimon源码">
+      <created>1740844464329</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1740844464329</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -523,7 +512,7 @@
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryIndexedSortable.java</url>
-          <line>278</line>
+          <line>289</line>
           <option name="timeStamp" value="444" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
@@ -590,11 +579,6 @@
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
           <line>997</line>
           <option name="timeStamp" value="658" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
-          <line>225</line>
-          <option name="timeStamp" value="681" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
@@ -680,11 +664,6 @@
           <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkStreamPartitioner.java</url>
           <line>123</line>
           <option name="timeStamp" value="789" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
-          <line>238</line>
-          <option name="timeStamp" value="790" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-ademo/src/main/java/com/paimon/source/ApiHelloWord.java</url>
@@ -1010,11 +989,6 @@
           <option name="timeStamp" value="899" />
         </line-breakpoint>
         <line-breakpoint type="java-line">
-          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
-          <line>265</line>
-          <option name="timeStamp" value="900" />
-        </line-breakpoint>
-        <line-breakpoint type="java-line">
           <url>jar://$PROJECT_DIR$/../../resource/apache-maven-3.8.6/RepositoryCommon/org/apache/flink/flink-connector-files/1.20.0/flink-connector-files-1.20.0.jar!/org/apache/flink/connector/base/source/reader/SourceReaderBase.class</url>
           <line>204</line>
           <option name="timeStamp" value="901" />
@@ -1174,45 +1148,175 @@
           <line>146</line>
           <option name="timeStamp" value="976" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/ConcatRecordReader.java</url>
           <line>64</line>
           <option name="timeStamp" value="977" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/ConcatRecordReader.java</url>
           <line>44</line>
           <option name="timeStamp" value="978" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/MergeFileSplitRead.java</url>
           <line>263</line>
           <option name="timeStamp" value="984" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java</url>
           <line>221</line>
           <option name="timeStamp" value="987" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/RawFileSplitRead.java</url>
           <line>197</line>
           <option name="timeStamp" value="988" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/SortMergeReaderWithLoserTree.java</url>
           <line>102</line>
           <option name="timeStamp" value="993" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/compact/LoserTree.java</url>
           <line>314</line>
           <option name="timeStamp" value="994" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
+        <line-breakpoint type="java-line">
           <url>file://$PROJECT_DIR$/paimon-format/src/main/java/org/apache/paimon/format/parquet/ParquetReaderFactory.java</url>
           <line>325</line>
           <option name="timeStamp" value="995" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSinkBase.java</url>
+          <line>153</line>
+          <option name="timeStamp" value="996" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSinkBuilder.java</url>
+          <line>248</line>
+          <option name="timeStamp" value="997" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkTableSinkBase.java</url>
+          <line>198</line>
+          <option name="timeStamp" value="998" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSinkBuilder.java</url>
+          <line>311</line>
+          <option name="timeStamp" value="999" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSinkBuilder.java</url>
+          <line>316</line>
+          <option name="timeStamp" value="1004" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
+          <line>238</line>
+          <option name="timeStamp" value="1005" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/FlinkSink.java</url>
+          <line>258</line>
+          <option name="timeStamp" value="1006" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/table/sink/TableWriteImpl.java</url>
+          <line>254</line>
+          <option name="timeStamp" value="1011" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryInMemorySortBuffer.java</url>
+          <line>158</line>
+          <option name="timeStamp" value="1012" />
+        </line-breakpoint>
+        <line-breakpoint type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryInMemorySortBuffer.java</url>
+          <line>166</line>
+          <option name="timeStamp" value="1013" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryExternalSortBuffer.java</url>
+          <line>194</line>
+          <option name="timeStamp" value="1021" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryExternalSortBuffer.java</url>
+          <line>203</line>
+          <option name="timeStamp" value="1022" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/sort/BinaryExternalSortBuffer.java</url>
+          <line>259</line>
+          <option name="timeStamp" value="1023" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeWriter.java</url>
+          <line>331</line>
+          <option name="timeStamp" value="1026" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/PrepareCommitOperator.java</url>
+          <line>111</line>
+          <option name="timeStamp" value="1028" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/mergetree/MergeTreeWriter.java</url>
+          <line>242</line>
+          <option name="timeStamp" value="1029" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/AbstractFileStoreWrite.java</url>
+          <line>284</line>
+          <option name="timeStamp" value="1031" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
+          <line>265</line>
+          <option name="timeStamp" value="1032" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/RowDataStoreWriteOperator.java</url>
+          <line>164</line>
+          <option name="timeStamp" value="1033" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
+          <line>185</line>
+          <option name="timeStamp" value="1034" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
+          <line>225</line>
+          <option name="timeStamp" value="1035" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-flink/paimon-flink-common/src/main/java/org/apache/paimon/flink/sink/CommitterOperator.java</url>
+          <line>255</line>
+          <option name="timeStamp" value="1036" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
+          <line>389</line>
+          <option name="timeStamp" value="1037" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
+          <line>381</line>
+          <option name="timeStamp" value="1038" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
+          <line>945</line>
+          <option name="timeStamp" value="1039" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/paimon-core/src/main/java/org/apache/paimon/operation/FileStoreCommitImpl.java</url>
+          <line>821</line>
+          <option name="timeStamp" value="1040" />
         </line-breakpoint>
         <line-breakpoint type="scala-line">
           <url>file://$PROJECT_DIR$/../../paimon_source/flink-1.19.1-src/flink-1.19.1/flink-table/flink-table-planner/src/main/scala/org/apache/flink/table/planner/delegation/PlannerBase.scala</url>

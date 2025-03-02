@@ -37,7 +37,7 @@ public class PaimonSource {
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment(conf);
         env.setParallelism(1);
         /** 设置检查点的时间间隔 */
-        env.enableCheckpointing(60000);
+        env.enableCheckpointing(10000);
         RocksDBStateBackend rocksDBStateBackend = new RocksDBStateBackend(
                 "file://" + checkpointPath, true);
         rocksDBStateBackend.setPredefinedOptions(PredefinedOptions.SPINNING_DISK_OPTIMIZED_HIGH_MEM);
@@ -55,10 +55,10 @@ public class PaimonSource {
                 "   PRIMARY KEY ( `id` ) NOT ENFORCED\n" +
                 ") WITH (\n" +
                 "'connector' = 'mysql-cdc',\n" +
-                "'hostname' = '192.168.0.109',\n" +
+                "'hostname' = '192.168.1.6',\n" +
                 "'port' = '3306',\n" +
                 "'username' = 'root',\n" +
-                "'password' = '666666',\n" +
+                "'password' = '123456',\n" +
                 "'database-name' = 'test',\n" +
                 "'scan.startup.mode' = 'initial',\n" +
                 "'table-name' = 'p_source4'\n" +

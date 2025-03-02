@@ -32,54 +32,57 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * An abstract sortable, provide basic compare and swap. Support writing of index and normalizedKey.
+ * 抽象的可排序类，提供基本的比较和交换功能。支持索引和规范化键的写入。
  */
-/**
-* @授课老师: 码界探索
-* @微信: 252810631
-* @版权所有: 请尊重劳动成果
-* 抽象的可排序类，提供基本的比较和交换功能。支持索引和规范化键的写入。
-*/
 public abstract class BinaryIndexedSortable implements IndexedSortable {
-    // 常量，表示偏移量的长度，通常为8字节（用于存储索引或偏移量）。
+    // 定义偏移量存储的长度，通常为8字节（long类型）
     public static final int OFFSET_LEN = 8;
 
-    // put/compare/swap normalized key
+    // 用于计算规范化键的组件
     private final NormalizedKeyComputer normalizedKeyComputer;
-    // 用于序列化和反序列化BinaryRow的序列化器。
+    // 序列化和反序列化BinaryRow对象的工具
     protected final BinaryRowSerializer serializer;
-
-    // if normalized key not fully determines, need compare record.
+    // 用于比较数据记录的比较器
     private final RecordComparator comparator;
 
+    // 记录数据的随机访问输入视图
     protected final RandomAccessInputView recordBuffer;
+    // 用于比较记录的随机访问输入视图
     private final RandomAccessInputView recordBufferForComparison;
 
-    // segments
-    // 当前用于存储排序索引的内存段。
+    // 当前用于存储排序索引的内存段
     protected MemorySegment currentSortIndexSegment;
-    // 内存段池，用于分配和回收内存段。
+    // 内存段池，用于动态分配和回收内存
     protected final MemorySegmentPool memorySegmentPool;
+    // 存储排序索引的内存段列表
     protected final ArrayList<MemorySegment> sortIndex;
 
-    // normalized key attributes
+    // 规范化键的字节数
     private final int numKeyBytes;
+    // 每个索引条目占用的总字节数
     protected final int indexEntrySize;
+    // 每个内存段中能容纳的索引条目数
     private final int indexEntriesPerSegment;
+    // 最后一个索引条目在内存段中的偏移量
     protected final int lastIndexEntryOffset;
+    // 标记规范化键是否完全决定排序顺序
     private final boolean normalizedKeyFullyDetermines;
+    // 标记是否未反转规范化键
     private final boolean useNormKeyUninverted;
 
-    // for serialized comparison
+    // 用于序列化比较的工具
     protected final BinaryRowSerializer serializer1;
     private final BinaryRowSerializer serializer2;
+    // 用于存储比较过程中的行数据
     protected final BinaryRow row1;
     private final BinaryRow row2;
 
-    // runtime variables
+    // 当前排序索引的偏移量
     protected int currentSortIndexOffset;
+    // 已处理的记录数
     protected int numRecords;
 
+    // 构造方法，初始化各项成员变量
     public BinaryIndexedSortable(
             NormalizedKeyComputer normalizedKeyComputer,
             BinaryRowSerializer serializer,
@@ -87,96 +90,88 @@ public abstract class BinaryIndexedSortable implements IndexedSortable {
             ArrayList<MemorySegment> recordBufferSegments,
             MemorySegmentPool memorySegmentPool) {
         if (normalizedKeyComputer == null || serializer == null) {
-            throw new NullPointerException();
+            throw new NullPointerException(); // 输入参数不能为空
         }
         this.normalizedKeyComputer = normalizedKeyComputer;
         this.serializer = serializer;
         this.comparator = comparator;
         this.memorySegmentPool = memorySegmentPool;
-        this.useNormKeyUninverted = !normalizedKeyComputer.invertKey();
 
-        this.numKeyBytes = normalizedKeyComputer.getNumKeyBytes();
+        this.useNormKeyUninverted = !normalizedKeyComputer.invertKey(); // 判断规范化键是否未反转
 
-        int segmentSize = memorySegmentPool.pageSize();
-        this.recordBuffer = new RandomAccessInputView(recordBufferSegments, segmentSize);
-        this.recordBufferForComparison =
-                new RandomAccessInputView(recordBufferSegments, segmentSize);
+        this.numKeyBytes = normalizedKeyComputer.getNumKeyBytes(); // 获取规范化键的字节数
 
-        this.normalizedKeyFullyDetermines = normalizedKeyComputer.isKeyFullyDetermines();
+        int segmentSize = memorySegmentPool.pageSize(); // 获取内存段大小
+        this.recordBuffer = new RandomAccessInputView(recordBufferSegments, segmentSize); // 初始化记录输入视图
+        this.recordBufferForComparison = new RandomAccessInputView(recordBufferSegments, segmentSize); // 初始化比较用记录输入视图
 
-        // compute the index entry size and limits
-        this.indexEntrySize = numKeyBytes + OFFSET_LEN;
-        this.indexEntriesPerSegment = segmentSize / this.indexEntrySize;
-        this.lastIndexEntryOffset = (this.indexEntriesPerSegment - 1) * this.indexEntrySize;
+        this.normalizedKeyFullyDetermines = normalizedKeyComputer.isKeyFullyDetermines(); // 判断规范化键是否完全决定排序顺序
 
+        // 计算索引条目大小和限制
+        this.indexEntrySize = numKeyBytes + OFFSET_LEN; // 每个索引条目包括规范化键和偏移量
+        this.indexEntriesPerSegment = segmentSize / this.indexEntrySize; // 每个内存段可存储的索引条目数
+        this.lastIndexEntryOffset = (this.indexEntriesPerSegment - 1) * this.indexEntrySize; // 最后一个索引条目的偏移量
+
+        // 初始化序列化工具和行数据对象
         this.serializer1 = serializer.duplicate();
         this.serializer2 = serializer.duplicate();
         this.row1 = this.serializer1.createInstance();
         this.row2 = this.serializer2.createInstance();
 
-        // set to initial state
-        this.sortIndex = new ArrayList<>(16);
-        this.currentSortIndexSegment = nextMemorySegment();
-        sortIndex.add(currentSortIndexSegment);
+        // 初始化状态
+        this.sortIndex = new ArrayList<>(16); // 初始化排序索引内存段列表
+        this.currentSortIndexSegment = nextMemorySegment(); // 获取第一个内存段
+        sortIndex.add(currentSortIndexSegment); // 添加到排序索引列表
     }
 
+    // 从内存段池中获取下一个内存段
     protected MemorySegment nextMemorySegment() {
         return this.memorySegmentPool.nextSegment();
     }
 
-    /** check if we need request next index memory. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    * 检查是否需要请求下一个索引内存。
-    */
+     * 检查是否需要请求下一个索引内存。
+     */
     protected boolean checkNextIndexOffset() {
-        // 如果当前的排序索引偏移量大于最后一个索引条目的偏移量
+        // 如果当前的排序索引偏移量超过了最后一个索引条目的偏移量
         if (this.currentSortIndexOffset > this.lastIndexEntryOffset) {
             // 请求下一个内存段
             MemorySegment returnSegment = nextMemorySegment();
-            // 如果成功获取到了新的内存段
+            // 如果获取到新的内存段
             if (returnSegment != null) {
-                // 更新当前的排序索引内存段为新的内存段
-                this.currentSortIndexSegment = returnSegment;
-                // 将新的内存段添加到排序索引的内存段列表中
-                this.sortIndex.add(this.currentSortIndexSegment);
-                // 重置当前的排序索引偏移量为0，因为新的开始点在新内存段
-                this.currentSortIndexOffset = 0;
+                this.currentSortIndexSegment = returnSegment; // 更新当前的内存段
+                this.sortIndex.add(this.currentSortIndexSegment); // 添加到排序索引列表
+                this.currentSortIndexOffset = 0; // 重置当前偏移量为0
             } else {
-                // 如果没有获取到新的内存段，返回false表示无法继续
-                return false;
+                return false; // 无法获取新内存段，返回失败
             }
         }
-        return true;
+        return true; // 检查通过，无需请求新内存段
     }
 
-    /** Write of index and normalizedKey. */
     /**
-    * @授课老师: 码界探索
-    * @微信: 252810631
-    * @版权所有: 请尊重劳动成果
-    *  写入索引和
-    */
+     * 写入索引和规范化键。
+     */
     protected void writeIndexAndNormalizedKey(InternalRow record, long currOffset) {
-        // add the pointer and the normalized key
-        //在currentSortIndexSegment记录这条数据在OutputView的位置（Long8个字节）
+        // 将记录的偏移量写入当前内存段的指定位置
         this.currentSortIndexSegment.putLong(this.currentSortIndexOffset, currOffset);
-        // 如果字节数不为0（即normalized）
+        // 写入规范化键
         if (this.numKeyBytes != 0) {
-            //将数据对应的Key写入到urrentSortIndexSegment
             normalizedKeyComputer.putKey(
-                    record, this.currentSortIndexSegment, this.currentSortIndexOffset + OFFSET_LEN);
+                    record,
+                    this.currentSortIndexSegment,
+                    this.currentSortIndexOffset + OFFSET_LEN
+            );
         }
-        // 更新当前索引偏移量，为下一个索引条目腾出空间
+        // 更新当前的偏移量，为下一个记录腾出空间
         this.currentSortIndexOffset += this.indexEntrySize;
-        // 增加记录计数器，表示已经处理了多少条记录
+        // 增加记录数
         this.numRecords++;
     }
 
     @Override
     public int compare(int i, int j) {
+        // 根据索引i和j的逻辑位置，计算对应的内存段和偏移量
         final int segmentNumberI = i / this.indexEntriesPerSegment;
         final int segmentOffsetI = (i % this.indexEntriesPerSegment) * this.indexEntrySize;
 
@@ -189,38 +184,49 @@ public abstract class BinaryIndexedSortable implements IndexedSortable {
     @Override
     public int compare(
             int segmentNumberI, int segmentOffsetI, int segmentNumberJ, int segmentOffsetJ) {
+        // 获取对应的内存段
         final MemorySegment segI = this.sortIndex.get(segmentNumberI);
         final MemorySegment segJ = this.sortIndex.get(segmentNumberJ);
 
-        int val =
-                normalizedKeyComputer.compareKey(
-                        segI, segmentOffsetI + OFFSET_LEN, segJ, segmentOffsetJ + OFFSET_LEN);
+        // 比较两个索引条目的规范化键
+        int val = normalizedKeyComputer.compareKey(
+                segI,
+                segmentOffsetI + OFFSET_LEN, // 跳过偏移量部分
+                segJ,
+                segmentOffsetJ + OFFSET_LEN
+        );
 
+        // 如果规范化键可以完全决定排序顺序，直接返回比较结果
         if (val != 0 || this.normalizedKeyFullyDetermines) {
-            return this.useNormKeyUninverted ? val : -val;
+            return this.useNormKeyUninverted ? val : -val; // 根据是否反转键值，调整比较结果
         }
 
-        final long pointerI = segI.getLong(segmentOffsetI);
-        final long pointerJ = segJ.getLong(segmentOffsetJ);
+        // 否则，使用记录比较器比较原始数据
+        final long pointerI = segI.getLong(segmentOffsetI); // 获取记录i的偏移量
+        final long pointerJ = segJ.getLong(segmentOffsetJ); // 获取记录j的偏移量
 
         return compareRecords(pointerI, pointerJ);
     }
 
     private int compareRecords(long pointer1, long pointer2) {
+        // 设置输入视图的读取位置为对应偏移量
         this.recordBuffer.setReadPosition(pointer1);
         this.recordBufferForComparison.setReadPosition(pointer2);
 
         try {
+            // 比较两个记录，并返回结果
             return this.comparator.compare(
-                    serializer1.mapFromPages(row1, recordBuffer),
-                    serializer2.mapFromPages(row2, recordBufferForComparison));
+                    serializer1.mapFromPages(row1, recordBuffer), // 映射记录1
+                    serializer2.mapFromPages(row2, recordBufferForComparison) // 映射记录2
+            );
         } catch (IOException ioex) {
-            throw new RuntimeException("Error comparing two records.", ioex);
+            throw new RuntimeException("Error comparing two records.", ioex); // 比较失败时抛出异常
         }
     }
 
     @Override
     public void swap(int i, int j) {
+        // 根据索引i和j的逻辑位置，计算对应的内存段和偏移量
         final int segmentNumberI = i / this.indexEntriesPerSegment;
         final int segmentOffsetI = (i % this.indexEntriesPerSegment) * this.indexEntrySize;
 
@@ -233,50 +239,55 @@ public abstract class BinaryIndexedSortable implements IndexedSortable {
     @Override
     public void swap(
             int segmentNumberI, int segmentOffsetI, int segmentNumberJ, int segmentOffsetJ) {
+        // 获取对应的内存段
         final MemorySegment segI = this.sortIndex.get(segmentNumberI);
         final MemorySegment segJ = this.sortIndex.get(segmentNumberJ);
 
-        // swap offset
+        // 交换偏移量
         long index = segI.getLong(segmentOffsetI);
         segI.putLong(segmentOffsetI, segJ.getLong(segmentOffsetJ));
         segJ.putLong(segmentOffsetJ, index);
 
-        // swap key
+        // 交换规范化键
         normalizedKeyComputer.swapKey(
-                segI, segmentOffsetI + OFFSET_LEN, segJ, segmentOffsetJ + OFFSET_LEN);
+                segI, segmentOffsetI + OFFSET_LEN, segJ, segmentOffsetJ + OFFSET_LEN
+        );
     }
 
     @Override
     public int size() {
-        return this.numRecords;
+        return this.numRecords; // 返回记录总数
     }
 
     @Override
     public int recordSize() {
-        return indexEntrySize;
+        return this.indexEntrySize; // 返回每个记录条目的大小
     }
 
     @Override
     public int recordsPerSegment() {
-        return indexEntriesPerSegment;
+        return this.indexEntriesPerSegment; // 返回每个内存段可存储的记录条目数
     }
 
-    /** Spill: Write all records to a {@link AbstractPagedOutputView}. */
+    /**
+     * 将所有记录写入到输出视图中。
+     */
     public void writeToOutput(AbstractPagedOutputView output) throws IOException {
         final int numRecords = this.numRecords;
-        int currentMemSeg = 0;
-        int currentRecord = 0;
+        int currentMemSeg = 0; // 当前处理的内存段索引
+        int currentRecord = 0; // 当前处理的记录索引
 
+        // 遍历所有内存段，将记录写入输出视图
         while (currentRecord < numRecords) {
-            final MemorySegment currentIndexSegment = this.sortIndex.get(currentMemSeg++);
+            final MemorySegment currentIndexSegment = this.sortIndex.get(currentMemSeg++); // 获取当前内存段
 
-            // go through all records in the memory segment
+            // 遍历内存段中的所有记录条目
             for (int offset = 0;
-                    currentRecord < numRecords && offset <= this.lastIndexEntryOffset;
-                    currentRecord++, offset += this.indexEntrySize) {
-                final long pointer = currentIndexSegment.getLong(offset);
-                this.recordBuffer.setReadPosition(pointer);
-                this.serializer.copyFromPagesToView(this.recordBuffer, output);
+                 currentRecord < numRecords && offset <= this.lastIndexEntryOffset;
+                 currentRecord++, offset += this.indexEntrySize) {
+                final long pointer = currentIndexSegment.getLong(offset); // 获取记录的偏移量
+                this.recordBuffer.setReadPosition(pointer); // 设置输入视图的读取位置
+                this.serializer.copyFromPagesToView(this.recordBuffer, output); // 将记录写入输出视图
             }
         }
     }
